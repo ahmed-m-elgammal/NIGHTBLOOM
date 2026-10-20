@@ -38,11 +38,17 @@ jobs:
       - name: Hardcoded Color Guard
         run: npm run lint:colors
 
+      - name: Token Reference Integrity Guard
+        run: npm run lint:tokens
+
       - name: Unit & Determinism Tests
         run: npm run test
 
       - name: Headless Bot Simulation (30 Seeds)
         run: npm run test:bot
 
-      - name: Production Bundle Build (<= 350 KB Budget)
+      - name: Production Bundle Build
         run: npm run build
+
+      - name: Production Bundle Budget Guard (<= 350 KB gzipped)
+        run: npm run check:budget

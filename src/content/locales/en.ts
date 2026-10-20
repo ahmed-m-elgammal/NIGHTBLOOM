@@ -11,7 +11,7 @@ export const en = {
   'ui.title.tagline': 'A signal is only worth sending if someone is listening.',
   'ui.title.btn_start': 'START PATROL',
   'ui.title.btn_dossier': 'FIELD DOSSIER',
-  'ui.title.btn_settings': 'AUDIO & CONTROLS',
+  'ui.title.btn_settings': 'DISPLAY & CONTROLS',
   'ui.title.controls_hint': 'WASD / ARROW KEYS TO MOVE MIRA · SPACE FOR BEACON PULSE · ESC TO PAUSE',
   'ui.title.version': 'PROTOTYPE V0.1.0 // ENGINE SPEC 1.0',
   'ui.title.system_status': 'SYSTEM: CANVAS 2D // 60 HZ FIXED TIMESTEP',
@@ -36,6 +36,19 @@ export const en = {
   'ui.hud.paused_title': 'SIMULATION PAUSED',
   'ui.hud.paused_body': 'Signal clock frozen. All timers halted.',
   'ui.hud.btn_resume': 'RESUME PATROL',
+  'ui.pause.settings': 'DISPLAY & ACCESSIBILITY',
+  'ui.pause.quit_title': 'ABANDON PATROL MISSION?',
+  'ui.pause.quit_body': 'Current sector telemetry and run progress will be lost. Return to Aster command?',
+  'ui.pause.confirm_quit': 'CONFIRM QUIT TO TITLE',
+  'ui.pause.cancel_resume': 'CANCEL & RESUME',
+
+  // Display & Accessibility Settings
+  'ui.settings.title': 'DISPLAY & ACCESSIBILITY SETTINGS',
+  'ui.settings.crt': 'CRT SCANLINE INTENSITY',
+  'ui.settings.darkness': 'TWILIGHT DARKNESS DENSITY',
+  'ui.settings.reduced_motion': 'REDUCED MOTION (DISABLE FLICKER & PULSE)',
+  'ui.settings.changes': 'CHANGES APPLY IMMEDIATELY.',
+  'ui.settings.back': 'BACK TO PAUSE MENU',
 
   // Dossier & Character Presentation
   'ui.dossier.badge': 'PERSONA DOSSIER // CLASSIFIED',
@@ -99,7 +112,7 @@ export const en = {
 
   // Mira Field Ledger
   'ledger.ninth_column.title': 'The Ninth Column',
-  'ledger.ninth_column.body': 'Field note: the Ninth Column was twelve kilometres out when I switched the beacon off. The storm found their radios instead. I do not write the rest down.',
+  'ledger.ninth_column.body': "Field note: the Ninth Column was twelve kilometres out when I switched the beacon off. The storm found their radios instead. I don't write the rest down.",
   'ledger.hollow_wind.title': 'Hollow Wind',
   'ledger.hollow_wind.body': 'Field note: it does not hunt us. It follows the ring. Tonight, the ring is here.',
   'ledger.thornrunner.title': 'Thornrunner',

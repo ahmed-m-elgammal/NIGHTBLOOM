@@ -1,11 +1,11 @@
 /**
  * Procedural Enemy Sprites (Seedling, Bloomed Seedling, Thornrunner, Rustwing, Briarheart)
+ * Staged for Milestone B: Core Combat & Entity Atlas Wiring
  * Authority: PREPRODUCTION.md §6.1 & spec/Technical Design Document (TDD).md §1.3
- * Zero external raster assets. High-definition vector synthesis using ThemeTokens.
  */
 
-import { ThemeTokens } from '../../content/theme/tokens';
-import { createBuffer } from './CharacterSprites';
+import { ThemeTokens } from '../src/content/theme/tokens';
+import { createBuffer } from '../src/game/rendering/CharacterSprites';
 
 /**
  * Seedling Sprite (36x36 px)

@@ -19,12 +19,14 @@ export const ThemeTokens = {
     playerLamp: '#67e8f9',
     flareTrail: '#38bdf8',
     signalCyanDim: '#0891b2',
+    signalCyanBright: '#67e8f9',
     signalCyanGlow: 'rgba(34, 211, 238, 0.35)',
     signalCyanGhost: 'rgba(34, 211, 238, 0.12)',
     signalCyanTransparent: 'rgba(34, 211, 238, 0)',
 
     // Hostile Entities & Danger (Amber / Red accents)
     hostileCore: '#f59e0b',
+    dangerAmber: '#f59e0b',
     dangerAmberBright: '#fbbf24',
     dangerAmberGlow: 'rgba(245, 158, 11, 0.35)',
     dangerAmberGhost: 'rgba(245, 158, 11, 0.12)',
@@ -57,10 +59,10 @@ export const ThemeTokens = {
     panelBorderHover: 'rgba(34, 211, 238, 0.55)',
     panelBorderActive: 'rgba(34, 211, 238, 0.9)',
 
-    // Vector Portrait Layer Palette
+    // Vector Portrait Layer Palette (Lifted value contrast for gameplay readability)
     portraitJacketDark: '#081820',
-    portraitJacketMid: '#102e3b',
-    portraitJacketLight: '#143c4d',
+    portraitJacketMid: '#16465a',
+    portraitJacketLight: '#1d5a73',
     portraitJacketBorder: 'rgba(34, 211, 238, 0.4)',
     portraitSkinBase: '#d8a684',
     portraitSkinShadow: '#b47854',
@@ -72,17 +74,25 @@ export const ThemeTokens = {
     portraitFeatureLip: '#7c3725',
     portraitEyeIris: '#111827',
     portraitEyeHighlight: '#ffffff',
+    rimLightCyan: 'rgba(56, 189, 248, 0.55)',
 
     // Soil, Agricultural Furrows & Concrete
     soilFurrowDark: '#040b10',
     soilFurrowLight: '#091e2b',
+    soilPatchLight: '#0d2838',
+    soilPatchDark: '#05111a',
+    strawStubble: '#1a3325',
     mossDense: '#0a3528',
     mossFringe: '#124838',
     concreteBase: '#1a2936',
     concreteRim: '#2d3f4e',
     concreteCrack: '#0e1821',
 
-    // Industrial & Rust
+    // Industrial Machinery & Prop Chrome (Muted so threat-amber is reserved for danger)
+    amberMuted: '#b47834',
+    machineryBronze: '#4a2817',
+    machineryMetalDark: '#1e293b',
+    machineryGlassTint: 'rgba(34, 211, 238, 0.15)',
     hazardYellow: '#eab308',
     hazardStripe: '#050f16',
     rustPlateDark: '#3b1d11',
@@ -96,13 +106,27 @@ export const ThemeTokens = {
     glassCabin: 'rgba(34, 211, 238, 0.25)',
     glassFrame: '#17303f',
 
+    // Narrative Landmarks: Collapsed Glasshouse & Nursery Cold-Frames
+    glasshouseSteel: '#2a3b4c',
+    glasshousePane: 'rgba(45, 85, 100, 0.35)',
+    coldFramePlastic: 'rgba(70, 110, 120, 0.25)',
+
     // Ambient Lighting & Vignette
     vignetteShadow: 'rgba(3, 7, 12, 0.72)',
     vignetteSoft: 'rgba(3, 7, 12, 0.28)',
     ambientDarkness: 'rgba(5, 15, 22, 0.35)',
+    ambientTwilightDarkness: 'rgba(4, 10, 18, 0.62)',
     backdropDeep: '#0a2130',
     scanlineBand: 'rgba(0, 0, 0, 0.25)',
     transparent: 'rgba(0, 0, 0, 0)',
+
+    // Destination-Out Masking & Alpha Gradient Stops
+    maskFull: 'rgba(0, 0, 0, 1.0)',
+    maskDense: 'rgba(0, 0, 0, 0.85)',
+    maskMid: 'rgba(0, 0, 0, 0.6)',
+    maskSoft: 'rgba(0, 0, 0, 0.45)',
+    maskFaint: 'rgba(0, 0, 0, 0.2)',
+    maskTransparent: 'rgba(0, 0, 0, 0)',
 
     // Dynamic Lighting Gradients
     lanternBeamBroad: 'rgba(34, 211, 238, 0.22)',
@@ -139,6 +163,8 @@ export const ThemeTokens = {
     lg: '24px',
     xl: '32px',
     touchTargetMin: '48px', // WCAG 2.5.5 / 2.5.8 compliant
+    safeAreaX: '64px',
+    safeAreaY: '36px',
   },
 
   radii: {

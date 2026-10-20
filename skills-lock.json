@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "algorithmic-art": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/algorithmic-art/SKILL.md",
+      "computedHash": "987b24aa98171a0d3690420173b2cdb6eaafd57981ed716b5d50371affa82ea3"
+    },
+    "canvas-generative": {
+      "source": "athevon/genjutsu",
+      "sourceType": "github",
+      "skillPath": "skills/_jutsu/canvas-generative/SKILL.md",
+      "computedHash": "f1992b5162c2484a72f2d87779991a3f0852f8dfc686750c9666dba43fc5133a"
+    }
+  }
+}

@@ -28,20 +28,48 @@ html, body {
   position: relative;
 }
 
-/* 1280x720 Canvas / Display viewport container with letterbox protection */
+/* Responsive 16:9 fit box. The authored 1280x720 stage lives inside it. */
 .viewport-frame {
-  width: 1280px;
-  height: 720px;
-  max-width: 100vw;
-  max-height: 100vh;
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  max-width: 1280px;
+  max-height: 720px;
   aspect-ratio: 16 / 9;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
   background-color: var(--color-ground-base);
-  border: 1px solid var(--color-panel-border);
   box-shadow: 0 0 50px var(--color-shadow-backdrop), 0 0 20px var(--color-signal-cyan-ghost);
+  isolation: isolate;
+}
+
+/* The stage is always 1280x720. Only its transform changes with the frame. */
+.viewport-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  background-color: var(--color-ground-base);
+  transform: scale(var(--stage-scale, 1));
+  transform-origin: top left;
+}
+
+/* Non-layout edge overlay; replaces the old 1px layout border. */
+.viewport-edge {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--color-panel-border);
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Every top-level screen fills the logical stage exactly. */
+.screen-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* CRT / Tactical scanning line effect - 1-2px thin lines with configurable opacity */
@@ -54,7 +82,7 @@ html, body {
   background-size: 100% 2px;
   z-index: 99;
   pointer-events: none;
-  opacity: var(--setting-crt-opacity, 0.12);
+  opacity: var(--setting-crt-opacity, 0.06);
   transition: opacity 0.2s ease;
 }
 
@@ -79,7 +107,12 @@ html, body {
 }
 
 /* High-contrast focus outline for accessibility */
-button:focus-visible, [tabindex]:focus-visible {
+button:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
   outline: 2px solid var(--color-signal-cyan-bright);
   outline-offset: 2px;
 }

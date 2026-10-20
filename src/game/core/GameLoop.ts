@@ -143,7 +143,7 @@ export class GameController {
     const dy = GAME_CONFIG.beacon.y - this.player.y;
     const dist = Math.round(Math.hypot(dx, dy));
     const angle = Math.atan2(dy, dx);
-    const countdown = Math.max(0, 225 - Math.floor(this.simulationTimeSec));
+    const countdown = Math.max(0, GAME_CONFIG.chapter.phaseDurationSec - Math.floor(this.simulationTimeSec));
 
     const snapshot: HudSnapshot = {
       playerX: Math.round(this.player.x),

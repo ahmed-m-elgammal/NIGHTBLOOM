@@ -2,6 +2,8 @@
  * Canvas 2D Render Pipeline with Procedural Sprite Atlas
  * Authority: nightbloom_game_prompt.md §6 & spec/Technical Design Document (TDD).md §1
  * Rules: ZERO hardcoded hex/rgba. All visuals use ThemeTokens & SpriteFactory.
+ * Foundation F-1: Offscreen ground cache blit (~1,900 fewer draw calls/frame).
+ * Foundation F-2: Real atmospheric twilight darkness composite.
  */
 
 import { GAME_CONFIG } from '../config/gameConfig';
@@ -9,12 +11,14 @@ import { ThemeTokens } from '../../content/theme/tokens';
 import { PlayerEntity } from '../entities/player';
 import { Vector2D } from '../input/InputManager';
 import { SpriteFactory, SpriteAtlas } from './SpriteFactory';
+import { GroundRenderer } from './GroundRenderer';
 import { LightingPass } from './LightingPass';
 
 export class CanvasRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private atlas: SpriteAtlas | null = null;
+  private groundCache: HTMLCanvasElement | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -25,6 +29,7 @@ export class CanvasRenderer {
     this.ctx = context;
     if (typeof window !== 'undefined') {
       this.atlas = SpriteFactory.getAtlas();
+      this.groundCache = GroundRenderer.getGroundCache(this.atlas);
     }
     this.resize();
   }
@@ -35,171 +40,84 @@ export class CanvasRenderer {
     this.canvas.height = Math.floor(GAME_CONFIG.viewport.height * dpr);
     this.ctx.resetTransform();
     this.ctx.scale(dpr, dpr);
+    LightingPass.resize(GAME_CONFIG.viewport.width, GAME_CONFIG.viewport.height);
   }
 
   public render(player: PlayerEntity, camera: Vector2D, timeSec: number): void {
     const { ctx } = this;
     const vw = GAME_CONFIG.viewport.width;
     const vh = GAME_CONFIG.viewport.height;
+    const { width: mw, height: mh } = GAME_CONFIG.map;
 
-    // Clear viewport with ground base token
+    // 1. Clear viewport with deep soil base token
     ctx.fillStyle = ThemeTokens.colors.groundBase;
     ctx.fillRect(0, 0, vw, vh);
 
+    const halfW = vw / 2;
+    const halfH = vh / 2;
+    const camX = Math.round(camera.x);
+    const camY = Math.round(camera.y);
+    const sx = Math.max(0, Math.min(mw - vw, camX - halfW));
+    const sy = Math.max(0, Math.min(mh - vh, camY - halfH));
+
+    // Layer 1 (Foundation F-1): Pre-rendered Ground & Landmark Cache Direct Screen Blit
+    // Blit directly in screen space [0, 0, vw, vh] for true 1:1 hardware copy with zero sub-pixel seams
+    if (this.groundCache) {
+      ctx.drawImage(this.groundCache, sx, sy, vw, vh, 0, 0, vw, vh);
+    }
+
     ctx.save();
     // Camera translation (Centers camera on player with smooth tracking)
-    ctx.translate(vw / 2 - camera.x, vh / 2 - camera.y);
+    ctx.translate(halfW - camX, halfH - camY);
 
-    // Layer 1: Ground terrain, plowed furrows, concrete access way, and moss
-    this.drawGround();
+    // Layer 2: Bioluminescent Nightbloom Flower Clusters (Animated breathing, viewport culled)
+    this.drawFlowerPatches(camX, camY, vw, vh, timeSec);
 
-    // Layer 2: Bioluminescent Nightbloom flower clusters
-    this.drawFlowerPatches(timeSec);
+    // Layer 3: Nursery Beacon Transmission Tower & Pulse Waves (viewport culled)
+    if (Math.abs(GAME_CONFIG.beacon.x - camX) < halfW + 300 && Math.abs(GAME_CONFIG.beacon.y - camY) < halfH + 300) {
+      this.drawBeacon(timeSec);
+    }
 
-    // Layer 3: Field Scenery & Props (Harvesters, Pylons, Sensors)
-    this.drawProps();
-
-    // Layer 3.5: Nursery Beacon Transmission Tower
-    this.drawBeacon(timeSec);
-
-    // Layer 4: Player (Mira Vale) with directional walk cycle & breathing bob
+    // Layer 4: Player (Mira Vale) with 4-frame stride & idle breathing bob
     this.drawPlayer(player, timeSec);
-
-    // Layer 6: Dynamic Light Emission & Volumetric Glow
-    LightingPass.drawLighting(ctx, player, timeSec);
-
-    // Layer 7: Drifting Grey Season pollen spores
-    LightingPass.drawAtmosphericSpores(ctx, timeSec);
 
     ctx.restore();
 
-    // Layer 7.5: Screen Space Atmospheric Vignette (Darkens edges to focus view)
+    // Layer 5 (F-2): Real Atmospheric Twilight Darkness Composite Pass
+    LightingPass.compositeAtmosphericLighting(ctx, player, camX, camY, vw, vh, timeSec);
+
+    // Layer 6: Screen Space Peripheral Vignette (cached offscreen stamp)
     LightingPass.drawScreenVignette(ctx, vw, vh);
   }
 
-  private drawGround(): void {
-    const { ctx } = this;
-    const { width: mw, height: mh, furrowRowHeight, borderStrokeWidth } = GAME_CONFIG.map;
-
-    // 1. Rich Organic Peat & Loam Soil Base
-    ctx.fillStyle = ThemeTokens.colors.groundSecondary;
-    ctx.fillRect(0, 0, mw, mh);
-
-    // 2. Agricultural Tilled Furrow Ridges (Soft organic soil grooves)
-    const rowStep = furrowRowHeight || 44;
-    ctx.lineWidth = 1.8;
-    for (let y = 30; y < mh; y += rowStep) {
-      // Subtle alternating earthen tone
-      const isAlt = Math.floor(y / rowStep) % 2 === 0;
-      ctx.strokeStyle = isAlt ? ThemeTokens.colors.soilFurrowDark : ThemeTokens.colors.soilFurrowLight;
-      ctx.beginPath();
-      // Organic furrow line across the field with gentle earth wave
-      ctx.moveTo(0, y);
-      for (let x = 0; x <= mw; x += 160) {
-        const waveY = y + Math.sin(x * 0.015 + y) * 2.5;
-        ctx.lineTo(x, waveY);
-      }
-      ctx.stroke();
-
-      // Earth clod texture dots along the furrows
-      ctx.fillStyle = isAlt ? ThemeTokens.colors.groundElevated : ThemeTokens.colors.groundBase;
-      for (let x = 60; x < mw; x += 220) {
-        const clodX = x + ((y * 17) % 80);
-        const clodY = y + Math.sin(clodX * 0.015 + y) * 2.5 + 2;
-        ctx.fillRect(clodX, clodY, 3, 2);
-      }
-    }
-
-    // 3. Central Concrete Access Plaza around Nursery Beacon (1600, 1200)
-    const roadWidth = 120;
-    const roadX = 1600 - roadWidth / 2;
-    ctx.fillStyle = ThemeTokens.colors.concreteBase;
-    ctx.fillRect(roadX, 0, roadWidth, mh);
-    ctx.strokeStyle = ThemeTokens.colors.concreteRim;
-    ctx.lineWidth = 2.5;
-    ctx.strokeRect(roadX, 0, roadWidth, mh);
-
-    // Concrete pavement joints
-    ctx.strokeStyle = ThemeTokens.colors.concreteCrack;
-    ctx.lineWidth = 1.2;
-    for (let y = 0; y <= mh; y += 80) {
-      ctx.beginPath();
-      ctx.moveTo(roadX, y);
-      ctx.lineTo(roadX + roadWidth, y);
-      ctx.stroke();
-    }
-
-    // Beacon Octagonal Foundation Plaza
-    const bx = 1600, by = 1200;
-    ctx.fillStyle = ThemeTokens.colors.concreteBase;
-    ctx.strokeStyle = ThemeTokens.colors.concreteRim;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-      const px = bx + Math.cos(a) * 110;
-      const py = by + Math.sin(a) * 110;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // 4. Perimeter Nursery Fence & Caution Stencils
-    ctx.strokeStyle = ThemeTokens.colors.panelBorderActive;
-    ctx.lineWidth = borderStrokeWidth;
-    ctx.strokeRect(borderStrokeWidth, borderStrokeWidth, mw - borderStrokeWidth * 2, mh - borderStrokeWidth * 2);
-
-    // Corner Hazard Markers
-    const cornerSize = 80;
-    ctx.fillStyle = ThemeTokens.colors.hazardYellow;
-    ctx.fillRect(0, 0, cornerSize, borderStrokeWidth * 2);
-    ctx.fillRect(mw - cornerSize, 0, cornerSize, borderStrokeWidth * 2);
-    ctx.fillRect(0, mh - borderStrokeWidth * 2, cornerSize, borderStrokeWidth * 2);
-    ctx.fillRect(mw - cornerSize, mh - borderStrokeWidth * 2, cornerSize, borderStrokeWidth * 2);
-  }
-
-  private drawFlowerPatches(timeSec: number): void {
+  private drawFlowerPatches(camX: number, camY: number, vw: number, vh: number, timeSec: number): void {
     if (!this.atlas) return;
     const { ctx } = this;
     const patches = GAME_CONFIG.map.flowerPatches;
+    const halfW = vw / 2;
+    const halfH = vh / 2;
+    const isReduced = LightingPass.isReducedMotion();
 
     for (let i = 0; i < patches.length; i++) {
       const patch = patches[i];
+      // Viewport culling: skips off-screen draw calls (saves 24+ draw calls per frame)
+      if (Math.abs(patch.x - camX) > halfW + 100 || Math.abs(patch.y - camY) > halfH + 100) continue;
+
       const spriteIdx = i % this.atlas.flowers.length;
       const sprite = this.atlas.flowers[spriteIdx];
 
-      // Bioluminescent breathing pulse
-      const pulse = Math.sin(timeSec * 2.2 + patch.x * 0.01) * 0.06 + 0.97;
-      const w = sprite.width * pulse;
-      const h = sprite.height * pulse;
+      // Bioluminescent breathing pulse & per-patch variation
+      const phase = timeSec * 2.2 + patch.x * 0.01;
+      const pulse = isReduced ? 1.0 : Math.sin(phase) * 0.06 + 0.97;
+      const baseScale = 0.9 + (i % 5) * 0.05;
+      const w = sprite.width * pulse * baseScale;
+      const h = sprite.height * pulse * baseScale;
 
-      ctx.drawImage(sprite, patch.x - w / 2, patch.y - h / 2, w, h);
-    }
-  }
-
-  private drawProps(): void {
-    if (!this.atlas) return;
-    const { ctx } = this;
-    const { harvesters, pylons, sensors } = GAME_CONFIG.map.props;
-
-    // Combine Harvester Wrecks
-    const harvesterSprite = this.atlas.props.harvester;
-    for (const pos of harvesters) {
-      ctx.drawImage(harvesterSprite, pos.x - harvesterSprite.width / 2, pos.y - harvesterSprite.height / 2);
-    }
-
-    // Irrigation Relay Pylons
-    const pylonSprite = this.atlas.props.pylon;
-    for (const pos of pylons) {
-      ctx.drawImage(pylonSprite, pos.x - pylonSprite.width / 2, pos.y - pylonSprite.height / 2);
-    }
-
-    // Soil Telemetry Sensor Stations
-    const sensorSprite = this.atlas.props.sensor;
-    for (const pos of sensors) {
-      ctx.drawImage(sensorSprite, pos.x - sensorSprite.width / 2, pos.y - sensorSprite.height / 2);
+      ctx.save();
+      ctx.translate(patch.x, patch.y);
+      if (i % 3 === 1) ctx.scale(-1, 1);
+      ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+      ctx.restore();
     }
   }
 
@@ -262,15 +180,14 @@ export class CanvasRenderer {
       flipX = true; // Moving Left
     }
 
-    // Dynamic stride cycling: 0 or 1
-    const stepIndex = player.isMoving ? Math.floor(player.walkTime * 8) % 2 : 0;
+    // 4-frame stride animation when moving; resting stance (frame 1) when idle
+    const stepIndex = player.isMoving ? Math.floor(player.walkTime * 10) % 4 : 1;
     const sprite = this.atlas.mira[dir][stepIndex];
 
     ctx.save();
     ctx.translate(player.x, player.y);
 
-    // Natural bobbing animation:
-    // Moving: vertical stride bobbing. Idle: gentle breathing bob.
+    // Natural bobbing: stride bobbing when moving; subtle lamp breathing sway when idle
     const bobY = player.isMoving
       ? Math.sin(player.walkTime * 14) * 2.2
       : Math.sin(timeSec * 3) * 0.8;

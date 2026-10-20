@@ -9,6 +9,7 @@ import { createMiraSprite } from './CharacterSprites';
 import { createBeaconSprite } from './BeaconSprite';
 import { createFlowerClusterSprite } from './FloraSprites';
 import { createHarvesterSprite, createPylonPropSprite, createSensorPropSprite } from './PropSprites';
+import { createGlasshouseSprite, createColdFramesSprite } from './LandmarkSprites';
 
 export interface SpriteAtlas {
   mira: {
@@ -22,6 +23,10 @@ export interface SpriteAtlas {
     harvester: HTMLCanvasElement;
     pylon: HTMLCanvasElement;
     sensor: HTMLCanvasElement;
+  };
+  landmarks: {
+    glasshouse: HTMLCanvasElement;
+    coldFrames: HTMLCanvasElement;
   };
 }
 
@@ -38,9 +43,24 @@ export class SpriteFactory {
   private static createAtlas(): SpriteAtlas {
     return {
       mira: {
-        down: [createMiraSprite('down', 0), createMiraSprite('down', 1)],
-        up: [createMiraSprite('up', 0), createMiraSprite('up', 1)],
-        side: [createMiraSprite('side', 0), createMiraSprite('side', 1)],
+        down: [
+          createMiraSprite('down', 0),
+          createMiraSprite('down', 1),
+          createMiraSprite('down', 2),
+          createMiraSprite('down', 3),
+        ],
+        up: [
+          createMiraSprite('up', 0),
+          createMiraSprite('up', 1),
+          createMiraSprite('up', 2),
+          createMiraSprite('up', 3),
+        ],
+        side: [
+          createMiraSprite('side', 0),
+          createMiraSprite('side', 1),
+          createMiraSprite('side', 2),
+          createMiraSprite('side', 3),
+        ],
       },
       beacon: createBeaconSprite(),
       flowers: [
@@ -52,6 +72,10 @@ export class SpriteFactory {
         harvester: createHarvesterSprite(),
         pylon: createPylonPropSprite(),
         sensor: createSensorPropSprite(),
+      },
+      landmarks: {
+        glasshouse: createGlasshouseSprite(),
+        coldFrames: createColdFramesSprite(),
       },
     };
   }

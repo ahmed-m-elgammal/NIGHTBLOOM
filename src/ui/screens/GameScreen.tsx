@@ -12,6 +12,7 @@ import { OperativeStatusCard } from '../components/OperativeStatusCard';
 import { DawnTracker } from '../components/DawnTracker';
 import { TacticalArmamentDock } from '../components/TacticalArmamentDock';
 import { PauseModal } from '../components/PauseModal';
+import { LightingPass } from '../../game/rendering/LightingPass';
 
 interface GameScreenProps {
   onReturnToTitle: () => void;
@@ -20,6 +21,9 @@ interface GameScreenProps {
 export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const controllerRef = useRef<GameController | null>(null);
+  const pauseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const isPausedRef = useRef<boolean>(false);
+  const previousPausedRef = useRef<boolean>(false);
 
   const [snapshot, setSnapshot] = useState<HudSnapshot>({
     playerX: 1600,
@@ -38,9 +42,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
   });
 
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [crtIntensity, setCrtIntensity] = useState<number>(0.12);
+  const [crtIntensity, setCrtIntensity] = useState<number>(0.06);
+  const [darknessDensity, setDarknessDensity] = useState<number>(0.60);
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
   const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (previousPausedRef.current && !isPaused) {
+      pauseButtonRef.current?.focus();
+    }
+    previousPausedRef.current = isPaused;
+  }, [isPaused]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,9 +72,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
-        const next = !controller.getPaused();
-        controller.setPaused(next);
-        setIsPaused(next);
+        if (isPausedRef.current) return;
+        isPausedRef.current = true;
+        controller.setPaused(true);
+        setIsPaused(true);
         AudioService.playBlip();
       } else if (e.code === 'Space') {
         setIsSpacePressed(true);
@@ -92,9 +105,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
     document.documentElement.style.setProperty('--setting-crt-opacity', val.toString());
   };
 
+  const handleDarknessChange = (val: number) => {
+    setDarknessDensity(val);
+    LightingPass.setDarknessAlpha(val);
+  };
+
+  const handleReducedMotionChange = (val: boolean) => {
+    setReducedMotion(val);
+    LightingPass.setReducedMotion(val);
+  };
+
   const handleTogglePause = () => {
     if (!controllerRef.current) return;
     const next = !isPaused;
+    isPausedRef.current = next;
     controllerRef.current.setPaused(next);
     setIsPaused(next);
     AudioService.playBlip();
@@ -113,7 +137,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
   const isLowHealth = snapshot.health <= 25;
 
   return (
-    <div className={`viewport-frame ${isLowHealth && !reducedMotion ? 'low-hp-vignette' : ''}`} style={{ position: 'relative' }}>
+    <div className={`screen-root ${isLowHealth && !reducedMotion ? 'low-hp-vignette' : ''}`}>
       {/* Canvas 2D Game World */}
       <canvas
         ref={canvasRef}
@@ -128,9 +152,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
       <div
         style={{
           position: 'absolute',
-          top: 'var(--spacing-md)',
-          left: 'var(--spacing-lg)',
-          right: 'var(--spacing-lg)',
+          top: 'var(--safe-area-y)',
+          left: 'var(--safe-area-x)',
+          right: 'var(--safe-area-x)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
@@ -173,6 +197,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
           </div>
 
           <button
+            ref={pauseButtonRef}
+            type="button"
             onClick={handleTogglePause}
             style={{
               minHeight: 'var(--touch-target-min)',
@@ -224,8 +250,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ onReturnToTitle }) => {
         <PauseModal
           crtIntensity={crtIntensity}
           reducedMotion={reducedMotion}
+          darknessDensity={darknessDensity}
           onCrtChange={handleCrtChange}
-          onReducedMotionChange={setReducedMotion}
+          onReducedMotionChange={handleReducedMotionChange}
+          onDarknessChange={handleDarknessChange}
           onResume={handleTogglePause}
           onConfirmQuit={handleConfirmQuit}
         />

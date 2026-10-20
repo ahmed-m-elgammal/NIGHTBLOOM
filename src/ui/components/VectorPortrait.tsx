@@ -14,7 +14,7 @@ export const VectorPortrait: React.FC<VectorPortraitProps> = ({
   // Glow token based on emotion state
   const glowVar =
     emotion === 'worried'
-      ? 'var(--color-danger-amber)'
+      ? 'var(--color-danger-amber-bright)'
       : emotion === 'relieved'
       ? 'var(--color-seed-core)'
       : 'var(--color-player-body)';
@@ -83,10 +83,19 @@ export const VectorPortrait: React.FC<VectorPortraitProps> = ({
         <path d="M 68 152 L 80 135 L 100 145 L 75 160 Z" fill="var(--color-portrait-jacket-light)" />
         <path d="M 132 152 L 120 135 L 100 145 L 125 160 Z" fill="var(--color-portrait-jacket-light)" />
 
+        {/* Operative Rank Insignia Strip on Shoulder */}
+        <rect x="42" y="165" width="14" height="4" rx="1" fill="var(--color-amber-muted)" />
+        <rect x="144" y="165" width="14" height="4" rx="1" fill="var(--color-amber-muted)" />
+
         {/* Glowing Beacon Collar Pin Badge */}
         <circle cx="100" cy="148" r="6" fill={glowVar} />
         <circle cx="100" cy="148" r="14" fill="url(#lampGlow)" opacity="0.6" />
         <circle cx="100" cy="148" r="3" fill="var(--color-portrait-eye-highlight)" />
+
+        {/* Tactical Radio Earpiece Wire & Active Transmission LED */}
+        <path d="M 68 96 Q 58 120 75 148" fill="none" stroke="var(--color-cable-black)" strokeWidth="1.2" />
+        <circle cx="68" cy="96" r="3" fill="var(--color-metal-trim)" />
+        <circle cx="68" cy="96" r="1.5" fill="var(--color-player-lamp)" />
 
         {/* Neck */}
         <path d="M 86 115 L 86 142 L 114 142 L 114 115 Z" fill="var(--color-portrait-skin-shadow)" />

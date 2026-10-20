@@ -40,17 +40,17 @@ export function createHarvesterSprite(): HTMLCanvasElement {
     ctx.stroke();
   }
 
-  // 3. Weathered Rusted Chassis Engine Block
-  ctx.fillStyle = ThemeTokens.colors.rustPlateDark;
-  ctx.strokeStyle = ThemeTokens.colors.rustPlateMid;
+  // 3. Weathered Industrial Chassis Engine Block
+  ctx.fillStyle = ThemeTokens.colors.machineryMetalDark;
+  ctx.strokeStyle = ThemeTokens.colors.machineryBronze;
   ctx.lineWidth = 2;
   ctx.fillRect(cx - 40, cy - 14, 80, 26);
   ctx.strokeRect(cx - 40, cy - 14, 80, 26);
 
   // Corrugated Rust Engine Cowling Panels
-  ctx.fillStyle = ThemeTokens.colors.rustPlateMid;
+  ctx.fillStyle = ThemeTokens.colors.machineryBronze;
   ctx.fillRect(cx - 36, cy - 10, 32, 18);
-  ctx.strokeStyle = ThemeTokens.colors.rustPlateLight;
+  ctx.strokeStyle = ThemeTokens.colors.rustPlateDark;
   ctx.lineWidth = 1;
   ctx.strokeRect(cx - 36, cy - 10, 32, 18);
 
@@ -80,9 +80,9 @@ export function createHarvesterSprite(): HTMLCanvasElement {
   ctx.lineTo(cx + 30, cy - 24);
   ctx.stroke();
 
-  // 5. Heavy Cylindrical Front Harvesting Reel
+  // 5. Heavy Cylindrical Front Harvesting Reel (Muted industrial bronze)
   ctx.fillStyle = ThemeTokens.colors.groundElevated;
-  ctx.strokeStyle = ThemeTokens.colors.dangerAmberBright;
+  ctx.strokeStyle = ThemeTokens.colors.amberMuted;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.ellipse(cx - 38, cy + 2, 8, 16, 0, 0, Math.PI * 2);
@@ -181,8 +181,13 @@ export function createPylonPropSprite(): HTMLCanvasElement {
   ctx.fillRect(cx - 7, 44, 14, 16);
   ctx.strokeRect(cx - 7, 44, 14, 16);
 
-  // Blinking Cyan Diagnostic Relay LED
-  ctx.fillStyle = ThemeTokens.colors.signalCyanDim;
+  // Cyan Diagnostic Relay LED & Active Signal Halo
+  ctx.fillStyle = ThemeTokens.colors.seedHaloGlow;
+  ctx.beginPath();
+  ctx.arc(cx, 52, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = ThemeTokens.colors.playerLamp;
   ctx.beginPath();
   ctx.arc(cx, 52, 2.5, 0, Math.PI * 2);
   ctx.fill();

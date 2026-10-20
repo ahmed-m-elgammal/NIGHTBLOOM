@@ -11,12 +11,14 @@
   --color-player-lamp: #67e8f9;
   --color-flare-trail: #38bdf8;
   --color-signal-cyan-dim: #0891b2;
+  --color-signal-cyan-bright: #67e8f9;
   --color-signal-cyan-glow: rgba(34, 211, 238, 0.35);
   --color-signal-cyan-ghost: rgba(34, 211, 238, 0.12);
   --color-signal-cyan-transparent: rgba(34, 211, 238, 0);
 
   /* Hostile & Warning amber accents */
   --color-hostile-core: #f59e0b;
+  --color-danger-amber: #f59e0b;
   --color-danger-amber-bright: #fbbf24;
   --color-danger-amber-glow: rgba(245, 158, 11, 0.35);
   --color-danger-amber-ghost: rgba(245, 158, 11, 0.12);
@@ -49,10 +51,10 @@
   --color-panel-border-hover: rgba(34, 211, 238, 0.55);
   --color-panel-border-active: rgba(34, 211, 238, 0.9);
 
-  /* Portrait Layer Palette */
+  /* Portrait Layer Palette (Lifted value contrast for gameplay readability) */
   --color-portrait-jacket-dark: #081820;
-  --color-portrait-jacket-mid: #102e3b;
-  --color-portrait-jacket-light: #143c4d;
+  --color-portrait-jacket-mid: #16465a;
+  --color-portrait-jacket-light: #1d5a73;
   --color-portrait-jacket-border: rgba(34, 211, 238, 0.4);
   --color-portrait-skin-base: #d8a684;
   --color-portrait-skin-shadow: #b47854;
@@ -64,17 +66,25 @@
   --color-portrait-feature-lip: #7c3725;
   --color-portrait-eye-iris: #111827;
   --color-portrait-eye-highlight: #ffffff;
+  --color-rim-light-cyan: rgba(56, 189, 248, 0.55);
 
   /* Soil, Agricultural Furrows & Concrete */
   --color-soil-furrow-dark: #040b10;
   --color-soil-furrow-light: #091e2b;
+  --color-soil-patch-light: #0d2838;
+  --color-soil-patch-dark: #05111a;
+  --color-straw-stubble: #1a3325;
   --color-moss-dense: #0a3528;
   --color-moss-fringe: #124838;
   --color-concrete-base: #1a2936;
   --color-concrete-rim: #2d3f4e;
   --color-concrete-crack: #0e1821;
 
-  /* Industrial & Rust */
+  /* Industrial Machinery & Prop Chrome (Muted so threat-amber is reserved for danger) */
+  --color-amber-muted: #b47834;
+  --color-machinery-bronze: #4a2817;
+  --color-machinery-metal-dark: #1e293b;
+  --color-machinery-glass-tint: rgba(34, 211, 238, 0.15);
   --color-hazard-yellow: #eab308;
   --color-hazard-stripe: #050f16;
   --color-rust-plate-dark: #3b1d11;
@@ -88,13 +98,27 @@
   --color-glass-cabin: rgba(34, 211, 238, 0.25);
   --color-glass-frame: #17303f;
 
+  /* Narrative Landmarks: Collapsed Glasshouse & Nursery Cold-Frames */
+  --color-glasshouse-steel: #2a3b4c;
+  --color-glasshouse-pane: rgba(45, 85, 100, 0.35);
+  --color-cold-frame-plastic: rgba(70, 110, 120, 0.25);
+
   /* Ambient Lighting & Vignette */
   --color-vignette-shadow: rgba(3, 7, 12, 0.72);
   --color-vignette-soft: rgba(3, 7, 12, 0.28);
   --color-ambient-darkness: rgba(5, 15, 22, 0.35);
+  --color-ambient-twilight-darkness: rgba(4, 10, 18, 0.62);
   --color-backdrop-deep: #0a2130;
   --color-scanline-band: rgba(0, 0, 0, 0.25);
   --color-transparent: rgba(0, 0, 0, 0);
+
+  /* Destination-Out Masking & Alpha Gradient Stops */
+  --color-mask-full: rgba(0, 0, 0, 1.0);
+  --color-mask-dense: rgba(0, 0, 0, 0.85);
+  --color-mask-mid: rgba(0, 0, 0, 0.6);
+  --color-mask-soft: rgba(0, 0, 0, 0.45);
+  --color-mask-faint: rgba(0, 0, 0, 0.2);
+  --color-mask-transparent: rgba(0, 0, 0, 0);
 
   /* Low-HP & Feedback Pulses */
   --color-danger-edge-pulse-low: rgba(244, 63, 94, 0.25);
@@ -118,6 +142,9 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
   --touch-target-min: 48px;
+  --safe-area-x: 64px;
+  --safe-area-y: 36px;
+  --stage-scale: 1;
 
   --radius-sm: 4px;
   --radius-md: 8px;

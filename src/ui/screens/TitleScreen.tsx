@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { t } from '../../content/locales/en';
 import { AudioService } from '../../services/audio';
+import { MissionBriefingCard } from '../components/MissionBriefingCard';
 
 interface TitleScreenProps {
   onStartGame: () => void;
@@ -11,7 +12,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onStartGame,
   onOpenDossier,
 }) => {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [focusedIdx, setFocusedIdx] = useState<number>(0);
 
   const handleStart = () => {
     AudioService.playPulseHum();
@@ -28,16 +29,35 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
     { key: 'dossier', labelKey: 'ui.title.btn_dossier' as const, action: handleDossier },
   ];
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S' || (e.key === 'Tab' && !e.shiftKey)) {
+        e.preventDefault();
+        setFocusedIdx((prev) => (prev + 1) % menuItems.length);
+        AudioService.playBlip();
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || (e.key === 'Tab' && e.shiftKey)) {
+        e.preventDefault();
+        setFocusedIdx((prev) => (prev - 1 + menuItems.length) % menuItems.length);
+        AudioService.playBlip();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        menuItems[focusedIdx].action();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusedIdx]);
+
   return (
     <div
-      className="viewport-frame"
+      className="screen-root"
       style={{
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: 'var(--spacing-xl)',
         background: 'radial-gradient(circle at 75% 40%, var(--color-ground-elevated) 0%, var(--color-ground-base) 85%)',
-        position: 'relative',
       }}
     >
       {/* Top Telemetry Ticker Header */}
@@ -135,27 +155,26 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             }}
           >
             {menuItems.map((item, idx) => {
-              const isHovered = hoveredIdx === idx;
+              const isFocused = focusedIdx === idx;
               return (
                 <button
                   key={item.key}
                   onClick={item.action}
                   onMouseEnter={() => {
                     AudioService.playBlip();
-                    setHoveredIdx(idx);
+                    setFocusedIdx(idx);
                   }}
-                  onMouseLeave={() => setHoveredIdx(null)}
                   style={{
                     minHeight: 'var(--touch-target-min)',
                     padding: '12px 20px',
                     borderRadius: 'var(--radius-sm)',
-                    background: isHovered
+                    background: isFocused
                       ? 'var(--color-surface-card-active)'
                       : 'var(--color-surface-card)',
-                    border: isHovered
+                    border: isFocused
                       ? '1px solid var(--color-player-body)'
                       : '1px solid var(--color-panel-border)',
-                    boxShadow: isHovered ? 'var(--shadow-glow-cyan)' : 'none',
+                    boxShadow: isFocused ? 'var(--shadow-glow-cyan)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -163,23 +182,23 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     fontSize: '14px',
                     fontWeight: 700,
                     letterSpacing: '1px',
-                    color: isHovered
+                    color: isFocused
                       ? 'var(--color-player-lamp)'
                       : 'var(--color-text-primary)',
-                    transform: isHovered ? 'translateX(6px)' : 'translateX(0)',
+                    transform: isFocused ? 'translateX(6px)' : 'translateX(0)',
                     transition: 'all 0.15s cubic-bezier(0.32, 0.72, 0, 1)',
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: isHovered ? 'var(--color-player-body)' : 'var(--color-text-muted)' }}>
-                      {isHovered ? '►' : '▷'}
+                    <span style={{ color: isFocused ? 'var(--color-player-body)' : 'var(--color-text-muted)' }}>
+                      {isFocused ? '►' : '▷'}
                     </span>
                     {t(item.labelKey)}
                   </span>
                   <span
                     style={{
                       fontSize: '11px',
-                      color: isHovered ? 'var(--color-player-body)' : 'var(--color-text-muted)',
+                      color: isFocused ? 'var(--color-player-body)' : 'var(--color-text-muted)',
                     }}
                   >
                     {idx === 0 ? '[ENTER]' : '[TAB]'}
@@ -191,77 +210,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
 
         {/* Right Column: Mission Briefing Card (Double-Bezel Tactical Hardware Panel) */}
-        <div
-          style={{
-            padding: '2px',
-            borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(135deg, var(--color-panel-border) 0%, transparent 60%)',
-            boxShadow: 'var(--shadow-panel)',
-            maxWidth: '480px',
-            justifySelf: 'end',
-          }}
-        >
-          <div
-            style={{
-              padding: 'var(--spacing-lg)',
-              borderRadius: 'calc(var(--radius-lg) - 2px)',
-              background: 'var(--color-surface-overlay)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid var(--color-panel-border-subtle)',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                color: 'var(--color-player-body)',
-                letterSpacing: '1px',
-                marginBottom: '8px',
-                fontWeight: 700,
-              }}
-            >
-              MISSION LOG // CONVOY SIGNAL KEEPER
-            </div>
-            <p
-              style={{
-                fontSize: '13px',
-                color: 'var(--color-text-secondary)',
-                lineHeight: 1.6,
-                marginBottom: '14px',
-              }}
-            >
-              The <strong>Tenth Column</strong> is navigating the Grey Season storm front. Mira Vale must patrol the Nightbloom field, relight the Nursery Beacon, and maintain 104.2 MHz signal integrity against approaching spores.
-            </p>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '8px',
-                paddingTop: '10px',
-                borderTop: '1px solid var(--color-panel-border-subtle)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-              }}
-            >
-              <div>
-                <span style={{ color: 'var(--color-text-muted)' }}>OPERATIVE:</span>{' '}
-                <strong style={{ color: 'var(--color-player-body)' }}>MIRA VALE</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--color-text-muted)' }}>STATUS:</span>{' '}
-                <strong style={{ color: 'var(--color-seed-core)' }}>READY</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--color-text-muted)' }}>SIGNAL COIL:</span>{' '}
-                <strong style={{ color: 'var(--color-hostile-core)' }}>DAMPENED</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--color-text-muted)' }}>STORM FRONT:</span>{' '}
-                <strong style={{ color: 'var(--color-danger-ring)' }}>APPROACHING</strong>
-              </div>
-            </div>
-          </div>
-        </div>
+        <MissionBriefingCard />
       </div>
 
       {/* Footer Navigation Advisory */}

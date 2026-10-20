@@ -10,8 +10,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "node scripts/lint-codebase.mjs",
     "lint:colors": "node scripts/check-hardcoded-colors.mjs",
+    "lint:tokens": "node scripts/check-token-refs.mjs",
     "test": "vitest run",
-    "ci": "npm run typecheck && npm run lint && npm run lint:colors && npm run test && npm run build",
+    "ci": "npm run typecheck && npm run lint && npm run lint:colors && npm run lint:tokens && npm run test && npm run build && npm run check:budget",
+    "check:budget": "node scripts/check-bundle-budget.mjs",
     "test:e2e": "echo \"Playwright E2E suite\"",
     "validate:content": "echo \"Content schema validation passed\"",
     "test:bot": "node spikes/s5-headless/run.mjs"

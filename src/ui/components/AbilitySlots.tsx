@@ -22,7 +22,7 @@ export const AbilitySlots: React.FC<AbilitySlotsProps> = ({ abilities }) => {
     >
       {abilities.map((ability) => {
         const isPulse = ability.iconType === 'pulse';
-        const accentVar = isPulse ? 'var(--color-player-body)' : 'var(--color-hostile-core)';
+        const accentVar = isPulse ? 'var(--color-player-lamp)' : 'var(--color-seed-core)';
 
         return (
           <div
@@ -53,16 +53,30 @@ export const AbilitySlots: React.FC<AbilitySlotsProps> = ({ abilities }) => {
                   marginBottom: 'var(--spacing-xs)',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '10px',
-                    color: accentVar,
-                    fontWeight: 700,
-                  }}
-                >
-                  {ability.keyBindingId ? t(ability.keyBindingId) : ability.type.toUpperCase()}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {isPulse ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentVar} strokeWidth="2">
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="12" cy="12" r="8" strokeDasharray="3 3" />
+                      <circle cx="12" cy="12" r="11" opacity="0.6" strokeDasharray="2 2" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={accentVar} strokeWidth="2">
+                      <line x1="4" y1="20" x2="20" y2="4" />
+                      <circle cx="20" cy="4" r="3" fill={accentVar} />
+                    </svg>
+                  )}
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '10px',
+                      color: accentVar,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {ability.keyBindingId ? t(ability.keyBindingId) : ability.type.toUpperCase()}
+                  </span>
+                </div>
                 <span
                   style={{
                     fontFamily: 'var(--font-mono)',

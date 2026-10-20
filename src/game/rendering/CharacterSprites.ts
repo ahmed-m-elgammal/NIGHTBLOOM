@@ -33,11 +33,16 @@ export function createMiraSprite(direction: 'down' | 'up' | 'side', step: number
   ctx.ellipse(cx, cy + 20, 16, 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Stride parameters (step 0 vs step 1)
-  const isAltStep = step === 1;
-  const legOffset = isAltStep ? 5 : -5;
-  const armOffset = isAltStep ? -3 : 3;
-  const coatSway = isAltStep ? 2 : -2;
+  // Stride parameters (4-frame walk cycle)
+  // Step 0: Lead foot forward; Step 1: Passing; Step 2: Opposing foot forward; Step 3: Passing
+  const legOffsets = [5, 1, -5, -1];
+  const armOffsets = [-3, -1, 3, 1];
+  const coatSways = [2, 0, -2, 0];
+
+  const s = Math.abs(Math.floor(step)) % 4;
+  const legOffset = legOffsets[s];
+  const armOffset = armOffsets[s];
+  const coatSway = coatSways[s];
 
   // 2. Legs & Heavy Combat Boots
   ctx.fillStyle = ThemeTokens.colors.portraitJacketDark;
@@ -100,6 +105,13 @@ export function createMiraSprite(direction: 'down' | 'up' | 'side', step: number
     ctx.fill();
     ctx.stroke();
 
+    // Operative Rim-Light (Luminance boost on lantern side for contrast against soil)
+    ctx.strokeStyle = ThemeTokens.colors.rimLightCyan;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 2, 13, Math.PI * 0.65, Math.PI * 1.35);
+    ctx.stroke();
+
     // Double-breasted folded lapel
     ctx.fillStyle = ThemeTokens.colors.portraitJacketLight;
     ctx.beginPath();
@@ -117,8 +129,8 @@ export function createMiraSprite(direction: 'down' | 'up' | 'side', step: number
     ctx.lineTo(cx - 1, cy + 3);
     ctx.stroke();
 
-    // Brass snap buttons
-    ctx.fillStyle = ThemeTokens.colors.dangerAmberBright;
+    // Brass snap buttons (Muted amber hardware)
+    ctx.fillStyle = ThemeTokens.colors.amberMuted;
     ctx.beginPath();
     ctx.arc(cx + 2, cy - 4, 1.5, 0, Math.PI * 2);
     ctx.arc(cx + 2, cy - 1, 1.5, 0, Math.PI * 2);
@@ -127,7 +139,7 @@ export function createMiraSprite(direction: 'down' | 'up' | 'side', step: number
     // Tactical utility belt & brass buckle
     ctx.fillStyle = ThemeTokens.colors.cableBlack;
     ctx.fillRect(cx - 11, cy + 5, 22, 3.5);
-    ctx.fillStyle = ThemeTokens.colors.dangerAmberBright;
+    ctx.fillStyle = ThemeTokens.colors.amberMuted;
     ctx.fillRect(cx - 3, cy + 4.5, 6, 4.5);
     ctx.fillStyle = ThemeTokens.colors.cableBlack;
     ctx.fillRect(cx - 1.5, cy + 5.5, 3, 2.5);
@@ -179,7 +191,7 @@ export function createMiraSprite(direction: 'down' | 'up' | 'side', step: number
     // Rolled bedroll lashed below rucksack
     ctx.fillStyle = ThemeTokens.colors.portraitJacketMid;
     ctx.fillRect(cx - 9, cy + 9, 18, 4.5);
-    ctx.fillStyle = ThemeTokens.colors.dangerAmberBright;
+    ctx.fillStyle = ThemeTokens.colors.amberMuted;
     ctx.fillRect(cx - 6, cy + 9, 2, 4.5);
     ctx.fillRect(cx + 4, cy + 9, 2, 4.5);
 
@@ -222,7 +234,7 @@ export function createMiraSprite(direction: 'down' | 'up' | 'side', step: number
     ctx.fill();
 
     // Side utility belt pouch
-    ctx.fillStyle = ThemeTokens.colors.dangerAmberBright;
+    ctx.fillStyle = ThemeTokens.colors.amberMuted;
     ctx.fillRect(cx + 1, cy + 5, 4, 4);
 
     // Forward arm & glove

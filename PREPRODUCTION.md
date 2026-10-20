@@ -201,6 +201,34 @@ All values become typed config with unit-suffixed names. The "Range" column is t
 ### 6.3 Color roles (tokens, not hex)
 Ground and flowers: deep blue-green. Friendly signal and Mira: cyan. Hostile attacks and warnings: amber, always with a shape or outline cue. XP and pickups: mint. Health: warm red plus an icon and a number. Text: high-contrast against panels.
 
+### 6.4 One-Page Visual Constant Sheet (Anti-Drift Authority)
+
+| Layer / Element | Luminance Target | Primary Tokens | Rule / Enforcement |
+|---|---|---|---|
+| **Background (Soil / Road)** | $5\%\text{--}14\%$ | `groundBase`, `groundSecondary`, `soilFurrowDark`, `concreteBase` | Clods and furrows stay $\le 8\%$ value delta from base. |
+| **Props & Scenery** | $15\%\text{--}28\%$ | `rustPlateDark`, `concreteRim`, `metalTrim`, `hazardYellow` | Harvester/pylon values muted; must not out-shout player or threats. |
+| **Player (Mira Vale)** | $45\%\text{--}80\%$ | `playerBody`, `playerLamp`, `portraitJacketMid`, `portraitSkinBase` | $\ge 3:1$ contrast against soil; 1 px rim-light on lantern side. |
+| **Hostiles & Threats** | $60\%\text{--}95\%$ | `dangerAmberBright`, `dangerRing`, `hostileCore` | Pointed silhouettes, dark outline, saturated amber core. |
+| **Pickups & Seeds** | $50\%\text{--}75\%$ | `seedCore`, `seedHalo`, `seedHaloGlow` | Mint green only; never pointed; drifts to player. |
+
+#### Accent Color Division
+- **Threat Amber (`dangerAmberBright`):** Exclusively reserved for hostile cores, enemy shots, and lethal telegraphs.
+- **Machinery Amber / Yellow (`hazardYellow` / `rustPlateLight`):** Restricted to structural stripes and rusted panels at $\le 60\%$ threat saturation.
+- **Player Cyan (`playerBody` / `playerLamp`):** High-salience signal trail, lantern illumination, and active ability borders.
+
+#### Lighting & Atmosphere Budget
+- **Ambient Darkness Base:** `rgba(4, 10, 16, 0.55)` offscreen composite layer.
+- **Lantern Cone:** $200\text{ px}$ forward reach, 3-circle feathered soft radial falloff (zero hard wedge edges).
+- **Beacon Pulse:** $280\text{ px}$ min radius $\pm 30\text{ px}$ sine wave pulse at $2.8\text{ Hz}$.
+- **CRT Scanlines:** `0.06` default opacity; hard cap `0.20` in accessibility settings; must never occlude telegraphs.
+
+#### The Old Core / Stormroot Silhouette Progression (Story Props §9)
+1. **Stage 0 (Chapter 1):** Intact Nursery Beacon, steel foundation brackets, operational copper coils, flashing aviation obstruction light.
+2. **Stage 1 (Chapter 2):** Dormant bramble vines creeping over concrete apron; amber warning strobe.
+3. **Stage 2 (Chapter 3):** Bent spire, 30% coil coverage by hardened thorn growth, erratic signal discharge.
+4. **Stage 3 (Chapter 4):** Asymmetric botanical cage fracturing tower chassis, pulsing root veins.
+5. **Stage 4 (Chapter 5 Boss):** $220\text{ px}$ full Stormroot entity — fused titanium beacon mast bursting through a massive tangled botanical heart.
+
 ---
 
 ## 7. Wireframes and resolution
