@@ -98,7 +98,25 @@ export const ThemeTokens = {
 
     // Ambient Lighting & Vignette
     vignetteShadow: 'rgba(3, 7, 12, 0.72)',
-    ambientDarkness: 'rgba(5, 15, 22, 0.45)',
+    vignetteSoft: 'rgba(3, 7, 12, 0.28)',
+    ambientDarkness: 'rgba(5, 15, 22, 0.35)',
+    backdropDeep: '#0a2130',
+    scanlineBand: 'rgba(0, 0, 0, 0.25)',
+    transparent: 'rgba(0, 0, 0, 0)',
+
+    // Dynamic Lighting Gradients
+    lanternBeamBroad: 'rgba(34, 211, 238, 0.22)',
+    lanternBeamFaint: 'rgba(34, 211, 238, 0.08)',
+    lanternBeamCore: 'rgba(103, 232, 249, 0.25)',
+    lanternBeamCoreFade: 'rgba(34, 211, 238, 0.06)',
+    lanternBeamFoot: 'rgba(34, 211, 238, 0.14)',
+    beaconGlowInner: 'rgba(34, 211, 238, 0.22)',
+    beaconGlowOuter: 'rgba(34, 211, 238, 0.06)',
+
+    // Low-HP / Feedback Pulses
+    dangerEdgePulseLow: 'rgba(244, 63, 94, 0.25)',
+    dangerEdgePulseHigh: 'rgba(244, 63, 94, 0.55)',
+    abilityActivePress: 'rgba(34, 211, 238, 0.25)',
 
     // Typography (High-contrast accessible text)
     textPrimary: '#f8fafc',

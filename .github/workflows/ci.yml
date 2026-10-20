@@ -1,0 +1,48 @@
+name: NIGHTBLOOM CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, Lint, Test & Color Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Architectural & Anti-Slop Lint
+        run: npm run lint
+
+      - name: Hardcoded Color Guard
+        run: npm run lint:colors
+
+      - name: Unit & Determinism Tests
+        run: npm run test
+
+      - name: Headless Bot Simulation (30 Seeds)
+        run: npm run test:bot
+
+      - name: Production Bundle Build (<= 350 KB Budget)
+        run: npm run build

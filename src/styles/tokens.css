@@ -90,7 +90,16 @@
 
   /* Ambient Lighting & Vignette */
   --color-vignette-shadow: rgba(3, 7, 12, 0.72);
-  --color-ambient-darkness: rgba(5, 15, 22, 0.45);
+  --color-vignette-soft: rgba(3, 7, 12, 0.28);
+  --color-ambient-darkness: rgba(5, 15, 22, 0.35);
+  --color-backdrop-deep: #0a2130;
+  --color-scanline-band: rgba(0, 0, 0, 0.25);
+  --color-transparent: rgba(0, 0, 0, 0);
+
+  /* Low-HP & Feedback Pulses */
+  --color-danger-edge-pulse-low: rgba(244, 63, 94, 0.25);
+  --color-danger-edge-pulse-high: rgba(244, 63, 94, 0.55);
+  --color-ability-active-press: rgba(34, 211, 238, 0.25);
 
   /* Typography */
   --color-text-primary: #f8fafc;

@@ -8,11 +8,13 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "lint": "node scripts/lint-codebase.mjs",
+    "lint:colors": "node scripts/check-hardcoded-colors.mjs",
     "test": "vitest run",
-    "lint": "echo \"ESLint clean\"",
+    "ci": "npm run typecheck && npm run lint && npm run lint:colors && npm run test && npm run build",
     "test:e2e": "echo \"Playwright E2E suite\"",
     "validate:content": "echo \"Content schema validation passed\"",
-    "test:bot": "echo \"Headless balance bot suite\""
+    "test:bot": "node spikes/s5-headless/run.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

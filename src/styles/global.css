@@ -24,7 +24,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 30%, #0a2130 0%, #050f16 85%);
+  background: radial-gradient(circle at 50% 30%, var(--color-backdrop-deep) 0%, var(--color-ground-base) 85%);
   position: relative;
 }
 
@@ -41,7 +41,7 @@ html, body {
   flex-direction: column;
   background-color: var(--color-ground-base);
   border: 1px solid var(--color-panel-border);
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(34, 211, 238, 0.15);
+  box-shadow: 0 0 50px var(--color-shadow-backdrop), 0 0 20px var(--color-signal-cyan-ghost);
 }
 
 /* CRT / Tactical scanning line effect - 1-2px thin lines with configurable opacity */
@@ -50,7 +50,7 @@ html, body {
   display: block;
   position: absolute;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background: linear-gradient(var(--color-transparent) 50%, var(--color-scanline-band) 50%);
   background-size: 100% 2px;
   z-index: 99;
   pointer-events: none;
@@ -63,15 +63,15 @@ html, body {
   content: " ";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, transparent 75%, rgba(5, 15, 22, 0.35) 100%);
+  background: radial-gradient(circle at 50% 50%, transparent 75%, var(--color-ambient-darkness) 100%);
   pointer-events: none;
   z-index: 98;
 }
 
 /* Low-HP warning edge pulse */
 @keyframes lowHpPulse {
-  0%, 100% { box-shadow: inset 0 0 25px rgba(244, 63, 94, 0.25); }
-  50% { box-shadow: inset 0 0 60px rgba(244, 63, 94, 0.55); }
+  0%, 100% { box-shadow: inset 0 0 25px var(--color-danger-edge-pulse-low); }
+  50% { box-shadow: inset 0 0 60px var(--color-danger-edge-pulse-high); }
 }
 
 .low-hp-vignette {
