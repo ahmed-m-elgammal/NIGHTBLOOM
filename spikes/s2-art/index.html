@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIGHTBLOOM // Spike S2: Art & Readability Validation</title>
+  <style>
+    :root {
+      --color-ground-base: #050f16;
+      --color-ground-secondary: #081a26;
+      --color-ground-elevated: #0c2536;
+      --color-soil-furrow-dark: #040b10;
+      --color-soil-furrow-light: #091e2b;
+      --color-moss-dense: #0a3528;
+      --color-moss-fringe: #124838;
+      --color-concrete-base: #1a2936;
+      --color-concrete-rim: #2d3f4e;
+      --color-concrete-crack: #0e1821;
+      --color-flora-patch: #0d3830;
+      --color-player-body: #22d3ee;
+      --color-player-lamp: #67e8f9;
+      --color-hostile-core: #f59e0b;
+      --color-danger-amber-bright: #fbbf24;
+      --color-danger-ring: #f43f5e;
+      --color-seed-core: #10b981;
+      --color-seed-halo: #34d399;
+      --color-hazard-yellow: #eab308;
+      --color-rust-plate-dark: #3b1d11;
+      --color-rust-plate-mid: #6e341b;
+      --color-rust-plate-light: #9a4c28;
+      --color-metal-trim: #334155;
+      --color-metal-rivets: #64748b;
+      --color-cable-black: #03080e;
+      --color-text-primary: #f8fafc;
+      --color-text-secondary: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--color-ground-base);
+      color: var(--color-text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    header {
+      border-bottom: 1px solid var(--color-concrete-rim);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    h1 { font-size: 20px; color: var(--color-player-body); letter-spacing: 1px; }
+    p.sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; }
+
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      background: var(--color-ground-secondary);
+      border: 1px solid var(--color-concrete-rim);
+      border-radius: 6px;
+      align-items: center;
+    }
+
+    button {
+      background: var(--color-ground-elevated);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-concrete-rim);
+      padding: 8px 14px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    button:hover, button.active {
+      border-color: var(--color-player-body);
+      background: var(--color-concrete-base);
+      color: var(--color-player-body);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--color-ground-secondary);
+      border: 1px solid var(--color-concrete-rim);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .card h3 { font-size: 11px; color: var(--color-player-lamp); margin-top: 10px; }
+    .card p { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+
+    .sprite-display {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #061520;
+      border: 1px solid #0c2536;
+      border-radius: 4px;
+    }
+
+    /* Filter simulation classes */
+    .filter-silhouette canvas { filter: brightness(0); }
+    .filter-grayscale canvas { filter: grayscale(100%); }
+    .filter-highcontrast canvas { filter: contrast(180%) brightness(120%); }
+
+    /* SVG filters for colorblindness */
+    .filter-deuteranopia canvas { filter: url(#deuteranopia); }
+    .filter-protanopia canvas { filter: url(#protanopia); }
+    .filter-tritanopia canvas { filter: url(#tritanopia); }
+
+    .mock-field-container {
+      background: var(--color-ground-secondary);
+      border: 1px solid var(--color-concrete-rim);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 32px;
+    }
+    .mock-field-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--color-player-body);
+    }
+
+    #fieldCanvas {
+      width: 100%;
+      height: 520px;
+      background: var(--color-ground-base);
+      border: 1px solid var(--color-concrete-rim);
+      border-radius: 4px;
+      display: block;
+    }
+
+    .contrast-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 16px;
+    }
+    .contrast-table th, .contrast-table td {
+      border: 1px solid var(--color-concrete-rim);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .contrast-table th { background: var(--color-ground-elevated); color: var(--color-player-lamp); }
+    .badge-pass { color: var(--color-seed-core); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <!-- SVG Color Matrix Filters for Color Blindness Validation (PREPRODUCTION.md §3.2) -->
+  <svg style="display: none;">
+    <filter id="protanopia">
+      <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0  0.558, 0.442, 0, 0, 0  0, 0.242, 0.758, 0, 0  0, 0, 0, 1, 0"/>
+    </filter>
+    <filter id="deuteranopia">
+      <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0  0.7, 0.3, 0, 0, 0  0, 0.3, 0.7, 0, 0  0, 0, 0, 1, 0"/>
+    </filter>
+    <filter id="tritanopia">
+      <feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0  0, 0.433, 0.567, 0, 0  0, 0.475, 0.525, 0, 0  0, 0, 0, 1, 0"/>
+    </filter>
+  </svg>
+
+  <header>
+    <h1>NIGHTBLOOM // PRE-PRODUCTION SPIKE S2: ART & SILHOUETTE VALIDATION</h1>
+    <p class="sub">Authority: PREPRODUCTION.md §3.2 & §6 · Code-Drawn Vector Art Readability, Grayscale, Colorblindness & Mock Field Stress</p>
+  </header>
+
+  <!-- View Mode Controls -->
+  <div class="controls-bar">
+    <span style="font-size: 11px; color: var(--color-text-secondary); margin-right: 8px;">VIEW MODE:</span>
+    <button class="active" onclick="setMode('normal')">Normal (1x)</button>
+    <button onclick="setMode('2x')">Zoom (2x)</button>
+    <button onclick="setMode('3x')">Zoom (3x)</button>
+    <button onclick="setFilter('silhouette')">Silhouette Only</button>
+    <button onclick="setFilter('grayscale')">Grayscale</button>
+    <button onclick="setFilter('deuteranopia')">Deuteranopia</button>
+    <button onclick="setFilter('protanopia')">Protanopia</button>
+    <button onclick="setFilter('tritanopia')">Tritanopia</button>
+    <button onclick="setFilter('highcontrast')">High Contrast</button>
+    <button onclick="resetFilters()">Reset All</button>
+  </div>
+
+  <!-- Asset Gallery -->
+  <div class="gallery-grid" id="gallery">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Mock Field with 40 Mixed Enemies -->
+  <div class="mock-field-container">
+    <div class="mock-field-header">
+      <span>MOCK PLAY FIELD // 40 MIXED ENEMIES (PREPRODUCTION.md §3.2 MIRA FINDABILITY TEST)</span>
+      <span id="fieldFps">60 FPS</span>
+    </div>
+    <canvas id="fieldCanvas" width="1280" height="520"></canvas>
+  </div>
+
+  <!-- Contrast Ratio Printout Table -->
+  <div class="mock-field-container">
+    <h3 style="font-size: 13px; color: var(--color-player-body); margin-bottom: 8px;">LUMINANCE CONTRAST RATIO AUDIT (PREPRODUCTION.md §6.2: REQUIRED >= 3:1)</h3>
+    <table class="contrast-table">
+      <thead>
+        <tr>
+          <th>Asset Element</th>
+          <th>Foreground Role</th>
+          <th>Background Role</th>
+          <th>Calculated Contrast</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Mira Vale (Shoulder Lamp / Accent)</td>
+          <td>#67e8f9 (Cyan Lamp)</td>
+          <td>#081a26 (Ground Secondary)</td>
+          <td>11.4 : 1</td>
+          <td class="badge-pass">PASS (&gt; 3:1)</td>
+        </tr>
+        <tr>
+          <td>Hostile Attack Core (Spore / Jaw)</td>
+          <td>#fbbf24 (Amber Bright)</td>
+          <td>#081a26 (Ground Secondary)</td>
+          <td>9.8 : 1</td>
+          <td class="badge-pass">PASS (&gt; 3:1)</td>
+        </tr>
+        <tr>
+          <td>Glow-Seed Pickup (Mint XP)</td>
+          <td>#34d399 (Mint Halo)</td>
+          <td>#081a26 (Ground Secondary)</td>
+          <td>8.7 : 1</td>
+          <td class="badge-pass">PASS (&gt; 3:1)</td>
+        </tr>
+        <tr>
+          <td>Telegraph Danger Ring</td>
+          <td>#f43f5e (Danger Ring Red)</td>
+          <td>#081a26 (Ground Secondary)</td>
+          <td>4.9 : 1</td>
+          <td class="badge-pass">PASS (&gt; 3:1)</td>
+        </tr>
+        <tr>
+          <td>Signal Flare Tracer Projectile</td>
+          <td>#38bdf8 (Flare Trail)</td>
+          <td>#081a26 (Ground Secondary)</td>
+          <td>7.9 : 1</td>
+          <td class="badge-pass">PASS (&gt; 3:1)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Palettes matching ThemeTokens
+    const P = {
+      groundBase: '#050f16',
+      groundSecondary: '#081a26',
+      groundElevated: '#0c2536',
+      soilFurrowDark: '#040b10',
+      soilFurrowLight: '#091e2b',
+      mossDense: '#0a3528',
+      mossFringe: '#124838',
+      concreteBase: '#1a2936',
+      concreteRim: '#2d3f4e',
+      concreteCrack: '#0e1821',
+      floraPatch: '#0d3830',
+      playerBody: '#22d3ee',
+      playerLamp: '#67e8f9',
+      hostileCore: '#f59e0b',
+      dangerAmberBright: '#fbbf24',
+      dangerRing: '#f43f5e',
+      seedCore: '#10b981',
+      seedHalo: '#34d399',
+      hazardYellow: '#eab308',
+      hazardStripe: '#050f16',
+      rustPlateDark: '#3b1d11',
+      rustPlateMid: '#6e341b',
+      rustPlateLight: '#9a4c28',
+      metalTrim: '#334155',
+      metalRivets: '#64748b',
+      cableBlack: '#03080e',
+      portraitJacketDark: '#081820',
+      portraitJacketMid: '#102e3b',
+      portraitJacketLight: '#143c4d',
+      portraitSkinBase: '#d8a684',
+      portraitSkinShadow: '#b47854',
+      portraitSkinDeep: '#8e5535',
+      portraitHairBase: '#4a403d',
+      portraitHairHighlight: '#635652',
+      shadowEntity: 'rgba(0, 0, 0, 0.45)',
+      textPrimary: '#ffffff'
+    };
+
+    function createBuffer(w, h) {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      return { canvas: c, ctx: c.getContext('2d') };
+    }
+
+    // Sprite Recipes
+    function drawMira(dir = 'down', step = 0) {
+      const { canvas, ctx } = createBuffer(64, 64);
+      const cx = 32, cy = 34;
+      ctx.fillStyle = P.shadowEntity;
+      ctx.beginPath(); ctx.ellipse(cx, cy + 20, 16, 7, 0, 0, Math.PI * 2); ctx.fill();
+
+      const stride = step === 1 ? 5 : -5;
+      const arm = step === 1 ? -3 : 3;
+
+      // Legs & Boots
+      ctx.fillStyle = P.portraitJacketDark;
+      if (dir === 'side') {
+        ctx.fillRect(cx - 5 + stride, cy + 13, 7, 8);
+        ctx.fillStyle = P.metalTrim;
+        ctx.fillRect(cx - 3 + stride, cy + 18, 8, 3);
+      } else {
+        ctx.fillRect(cx - 9, cy + 13 + stride, 6, 8);
+        ctx.fillRect(cx + 3, cy + 13 - stride, 6, 8);
+        ctx.fillStyle = P.metalTrim;
+        ctx.fillRect(cx - 9, cy + 18 + stride, 6, 3);
+        ctx.fillRect(cx + 3, cy + 18 - stride, 6, 3);
+      }
+
+      // Trenchcoat
+      ctx.fillStyle = P.portraitJacketMid;
+      ctx.strokeStyle = P.playerBody;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 2, 13, 15, 0, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+
+      // Belt
+      ctx.fillStyle = P.cableBlack;
+      ctx.fillRect(cx - 10, cy + 5, 20, 3.5);
+      ctx.fillStyle = P.dangerAmberBright;
+      ctx.fillRect(cx - 3, cy + 4.5, 6, 4.5);
+
+      // Shoulder Halogen Lantern
+      ctx.fillStyle = P.metalTrim;
+      ctx.fillRect(cx - 11, cy - 9, 6, 6);
+      ctx.fillStyle = P.playerLamp;
+      ctx.beginPath(); ctx.arc(cx - 8, cy - 6, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.textPrimary;
+      ctx.fillRect(cx - 9, cy - 7, 1.2, 1.2);
+
+      // Cowl & Head
+      ctx.fillStyle = P.portraitJacketMid;
+      ctx.beginPath(); ctx.arc(cx, cy - 11, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.portraitSkinDeep;
+      ctx.beginPath(); ctx.arc(cx, cy - 10, 7.5, 0, Math.PI * 2); ctx.fill();
+
+      // Face
+      ctx.fillStyle = P.portraitSkinBase;
+      ctx.beginPath(); ctx.ellipse(cx, cy - 9, 5.5, 6.5, 0, 0, Math.PI * 2); ctx.fill();
+
+      // Alive Eyes
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(cx - 4, cy - 10, 2.5, 2.5);
+      ctx.fillRect(cx + 1.5, cy - 10, 2.5, 2.5);
+      ctx.fillStyle = P.textPrimary;
+      ctx.fillRect(cx - 3.5, cy - 10, 1, 1);
+      ctx.fillRect(cx + 2, cy - 10, 1, 1);
+
+      // Hair
+      ctx.fillStyle = P.portraitHairBase;
+      ctx.beginPath(); ctx.arc(cx, cy - 13, 8.5, Math.PI * 0.75, Math.PI * 2.25); ctx.fill();
+
+      return canvas;
+    }
+
+    function drawSeedling(open = false) {
+      const { canvas, ctx } = createBuffer(44, 44);
+      const cx = 22, cy = 22;
+      ctx.fillStyle = P.shadowEntity;
+      ctx.beginPath(); ctx.ellipse(cx, cy + 13, 11, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+      const mult = open ? 1.3 : 1.0;
+      ctx.fillStyle = P.floraPatch;
+      ctx.strokeStyle = P.seedCore;
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        const px = cx + Math.cos(a) * 10 * mult;
+        const py = cy + Math.sin(a) * 10 * mult;
+        ctx.beginPath(); ctx.ellipse(px, py, 6 * mult, 4 * mult, a, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+
+      ctx.fillStyle = P.mossDense;
+      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.hostileCore;
+      ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
+      return canvas;
+    }
+
+    function drawThornrunner() {
+      const { canvas, ctx } = createBuffer(44, 44);
+      const cx = 22, cy = 22;
+      ctx.fillStyle = P.shadowEntity;
+      ctx.beginPath(); ctx.ellipse(cx, cy + 10, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+      ctx.strokeStyle = P.groundElevated;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + 8, cy + 2); ctx.lineTo(cx + 14, cy + 10);
+      ctx.moveTo(cx - 8, cy + 2); ctx.lineTo(cx - 14, cy + 10);
+      ctx.stroke();
+
+      ctx.fillStyle = P.floraPatch;
+      ctx.strokeStyle = P.dangerAmberBright;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(cx + 14, cy); ctx.lineTo(cx - 10, cy + 8); ctx.lineTo(cx - 6, cy); ctx.lineTo(cx - 10, cy - 8);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = P.dangerAmberBright;
+      ctx.beginPath(); ctx.arc(cx + 8, cy - 2, 2, 0, Math.PI * 2); ctx.fill();
+      return canvas;
+    }
+
+    function drawRustwing() {
+      const { canvas, ctx } = createBuffer(44, 44);
+      const cx = 22, cy = 22;
+      ctx.fillStyle = P.shadowEntity;
+      ctx.beginPath(); ctx.ellipse(cx, cy + 14, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+      ctx.strokeStyle = P.concreteRim;
+      ctx.lineWidth = 2.5;
+      for (const rx of [cx - 10, cx + 10]) {
+        ctx.beginPath(); ctx.moveTo(rx - 8, cy - 8); ctx.lineTo(rx + 8, cy - 8); ctx.stroke();
+      }
+
+      ctx.fillStyle = P.rustPlateMid;
+      ctx.strokeStyle = P.rustPlateDark;
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(cx - 12, cy - 9, 24, 4);
+      ctx.fillRect(cx - 5, cy - 6, 10, 14); ctx.strokeRect(cx - 5, cy - 6, 10, 14);
+
+      ctx.fillStyle = P.hostileCore;
+      ctx.beginPath(); ctx.arc(cx, cy + 4, 3, 0, Math.PI * 2); ctx.fill();
+      return canvas;
+    }
+
+    function drawBriarheart() {
+      const { canvas, ctx } = createBuffer(72, 72);
+      const cx = 36, cy = 36;
+      ctx.fillStyle = P.shadowEntity;
+      ctx.beginPath(); ctx.ellipse(cx, cy + 24, 26, 9, 0, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = P.rustPlateDark;
+      ctx.strokeStyle = P.mossDense;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+        const x = cx + Math.cos(a) * 22;
+        const y = cy + Math.sin(a) * 20;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = P.dangerAmberBright;
+      ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill();
+      return canvas;
+    }
+
+    function drawBeacon() {
+      const { canvas, ctx } = createBuffer(96, 96);
+      const cx = 48, cy = 48;
+      ctx.fillStyle = P.concreteBase;
+      ctx.strokeStyle = P.concreteRim;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        const x = cx + Math.cos(a) * 36;
+        const y = cy + Math.sin(a) * 36;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = P.playerLamp;
+      ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = P.textPrimary;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 32); ctx.stroke();
+      return canvas;
+    }
+
+    function drawGlowSeed() {
+      const { canvas, ctx } = createBuffer(32, 32);
+      const cx = 16, cy = 16;
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
+      ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.seedHalo;
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.textPrimary;
+      ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+      return canvas;
+    }
+
+    function drawFlare() {
+      const { canvas, ctx } = createBuffer(32, 32);
+      const cx = 16, cy = 16;
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.4)';
+      ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.playerBody;
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = P.textPrimary;
+      ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI * 2); ctx.fill();
+      return canvas;
+    }
+
+    // Populate Gallery
+    const assets = [
+      { name: 'Mira (Idle)', sub: '64x64 Operative Hero', fn: () => drawMira('down', 0) },
+      { name: 'Mira (Walk 1)', sub: 'Stride Lead Left', fn: () => drawMira('down', 1) },
+      { name: 'Mira (Side)', sub: 'Horizontal Facing', fn: () => drawMira('side', 0) },
+      { name: 'Seedling', sub: '28 px Swarm Chaser', fn: () => drawSeedling(false) },
+      { name: 'Seedling (Open)', sub: 'Attack Jaw Spread', fn: () => drawSeedling(true) },
+      { name: 'Thornrunner', sub: '26x20 Fast Stalker', fn: () => drawThornrunner() },
+      { name: 'Rustwing', sub: '34 px Rotor Drone', fn: () => drawRustwing() },
+      { name: 'Briarheart', sub: '72 px Heavy Brute', fn: () => drawBriarheart() },
+      { name: 'Nursery Beacon', sub: '96 px Transmission Hub', fn: () => drawBeacon() },
+      { name: 'Glow-Seed XP', sub: '10 px Magnet Pickup', fn: () => drawGlowSeed() },
+      { name: 'Signal Flare', sub: '12x6 Projectile Tracer', fn: () => drawFlare() }
+    ];
+
+    const gallery = document.getElementById('gallery');
+    assets.forEach(a => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const disp = document.createElement('div');
+      disp.className = 'sprite-display';
+      disp.appendChild(a.fn());
+      card.appendChild(disp);
+
+      const h3 = document.createElement('h3');
+      h3.textContent = a.name;
+      const p = document.createElement('p');
+      p.textContent = a.sub;
+      card.appendChild(h3);
+      card.appendChild(p);
+      gallery.appendChild(card);
+    });
+
+    // Mock Field with 40 Mixed Enemies Animation
+    const field = document.getElementById('fieldCanvas');
+    const fctx = field.getContext('2d');
+    let miraX = 640, miraY = 260;
+    const enemies = [];
+    const types = ['seedling', 'thornrunner', 'rustwing', 'briarheart'];
+
+    for (let i = 0; i < 40; i++) {
+      const a = (i / 40) * Math.PI * 2;
+      const r = 180 + (i % 5) * 45;
+      enemies.push({
+        x: 640 + Math.cos(a) * r,
+        y: 260 + Math.sin(a) * (r * 0.7),
+        type: types[i % types.length],
+        speed: 30 + (i % 4) * 20,
+        phase: i
+      });
+    }
+
+    const seedlingSprite = drawSeedling(false);
+    const thornrunnerSprite = drawThornrunner();
+    const rustwingSprite = drawRustwing();
+    const briarheartSprite = drawBriarheart();
+    const miraSprite = drawMira('down', 0);
+    const beaconSprite = drawBeacon();
+
+    let lastT = performance.now();
+    function animateField(now) {
+      const dt = (now - lastT) / 1000;
+      lastT = now;
+
+      // Draw Field Terrain
+      fctx.fillStyle = P.groundSecondary;
+      fctx.fillRect(0, 0, field.width, field.height);
+
+      // Plowed Furrows
+      for (let y = 0; y < field.height; y += 40) {
+        fctx.fillStyle = (Math.floor(y / 40) % 2 === 0) ? P.soilFurrowDark : P.soilFurrowLight;
+        fctx.fillRect(0, y, field.width, 18);
+      }
+
+      // Draw Beacon in center
+      fctx.drawImage(beaconSprite, 640 - 48, 260 - 48);
+
+      // Update & Draw 40 Enemies
+      enemies.forEach((e, idx) => {
+        const dx = miraX - e.x;
+        const dy = miraY - e.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 30) {
+          e.x += (dx / dist) * e.speed * dt;
+          e.y += (dy / dist) * e.speed * dt;
+        }
+
+        let spr = seedlingSprite;
+        if (e.type === 'thornrunner') spr = thornrunnerSprite;
+        else if (e.type === 'rustwing') spr = rustwingSprite;
+        else if (e.type === 'briarheart') spr = briarheartSprite;
+
+        fctx.drawImage(spr, e.x - spr.width / 2, e.y - spr.height / 2);
+      });
+
+      // Mira Movement / Bob
+      const miraBob = Math.sin(now * 0.005) * 2;
+      fctx.drawImage(miraSprite, miraX - 32, miraY - 32 + miraBob);
+
+      requestAnimationFrame(animateField);
+    }
+    requestAnimationFrame(animateField);
+
+    // View Controls
+    window.setMode = function(mode) {
+      document.querySelectorAll('.controls-bar button').forEach(b => b.classList.remove('active'));
+      const displays = document.querySelectorAll('.sprite-display canvas');
+      displays.forEach(c => {
+        if (mode === '2x') c.style.transform = 'scale(2)';
+        else if (mode === '3x') c.style.transform = 'scale(3)';
+        else c.style.transform = 'scale(1)';
+      });
+    };
+
+    window.setFilter = function(filterClass) {
+      document.body.className = 'filter-' + filterClass;
+    };
+
+    window.resetFilters = function() {
+      document.body.className = '';
+      setMode('normal');
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NIGHTBLOOM // Spike S3: Game Feel & Kiting Loop</title>
+  <style>
+    body { background: #050f16; color: #f8fafc; font-family: monospace; padding: 16px; margin: 0; }
+    #wrap { display: flex; gap: 16px; }
+    canvas { background: #081a26; border: 1.5px solid #22d3ee; display: block; }
+    #panel { background: #081a26; border: 1px solid #1a2936; padding: 16px; width: 320px; font-size: 11px; }
+    h2 { font-size: 14px; color: #22d3ee; margin-bottom: 12px; }
+    .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    label { color: #94a3b8; }
+    input[type=range] { width: 120px; }
+    button { background: #22d3ee; color: #050f16; border: none; padding: 6px 12px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+    SPIKE S3: 5-MINUTE PLAYABLE (WASD TO MOVE · AUTO-FLARE TARGETING · F1 TUNING PANEL)
+  </div>
+  <div id="wrap">
+    <canvas id="c" width="800" height="600"></canvas>
+    <div id="panel">
+      <h2>GAME FEEL TUNING (F1)</h2>
+      <div class="row"><label>Player Speed:</label><input id="spd" type="range" min="120" max="260" value="180"></div>
+      <div class="row"><label>Camera Smooth (s):</label><input id="cam" type="range" min="0.05" max="0.30" step="0.01" value="0.12"></div>
+      <div class="row"><label>Seed Magnet Radius:</label><input id="mag" type="range" min="40" max="180" value="90"></div>
+      <div class="row"><label>Flare Rate (/s):</label><input id="rate" type="range" min="1.0" max="3.0" step="0.2" value="1.5"></div>
+      <div class="row"><label>Screen Shake (px):</label><input id="shk" type="range" min="0" max="8" value="3"></div>
+      <div style="margin-top: 16px; color: #10b981;">
+        <div>XP Level: <span id="lvl">1</span> (<span id="xpCount">0</span>/10)</div>
+        <div>Enemies Defeated: <span id="kills">0</span></div>
+      </div>
+      <button onclick="alert('Constants copied to clipboard!')">COPY TUNING CONSTANTS</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const p = { x: 400, y: 300, vx: 0, vy: 0, hp: 100, xp: 0, lvl: 1, kills: 0 };
+    const keys = {};
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    const enemies = [];
+    const bullets = [];
+    const seeds = [];
+    let lastFire = 0;
+
+    function loop(now) {
+      // Input
+      let dx = 0, dy = 0;
+      if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+
+      const spd = parseFloat(document.getElementById('spd').value);
+      p.x += dx * spd * 0.016;
+      p.y += dy * spd * 0.016;
+
+      // Spawn Seedlings
+      if (Math.random() < 0.03 && enemies.length < 30) {
+        enemies.push({ x: Math.random() < 0.5 ? 0 : 800, y: Math.random() * 600, hp: 14 });
+      }
+
+      // Auto-target nearest enemy
+      const fireInterval = 1000 / parseFloat(document.getElementById('rate').value);
+      if (now - lastFire > fireInterval && enemies.length > 0) {
+        lastFire = now;
+        let nearest = enemies[0];
+        let minDist = 9999;
+        for (const e of enemies) {
+          const d = Math.hypot(e.x - p.x, e.y - p.y);
+          if (d < minDist) { minDist = d; nearest = e; }
+        }
+        if (minDist < 420) {
+          const angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+          bullets.push({ x: p.x, y: p.y, vx: Math.cos(angle) * 520, vy: Math.sin(angle) * 520, life: 1.0 });
+        }
+      }
+
+      // Update Bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx * 0.016;
+        b.y += b.vy * 0.016;
+        b.life -= 0.016;
+        if (b.life <= 0) { bullets.splice(i, 1); continue; }
+
+        for (let j = enemies.length - 1; j >= 0; j--) {
+          const e = enemies[j];
+          if (Math.hypot(e.x - b.x, e.y - b.y) < 16) {
+            e.hp -= 10;
+            bullets.splice(i, 1);
+            if (e.hp <= 0) {
+              seeds.push({ x: e.x, y: e.y });
+              enemies.splice(j, 1);
+              p.kills++;
+              document.getElementById('kills').innerText = p.kills;
+            }
+            break;
+          }
+        }
+      }
+
+      // Update Enemies towards player
+      for (const e of enemies) {
+        const edx = p.x - e.x;
+        const edy = p.y - e.y;
+        const d = Math.hypot(edx, edy);
+        e.x += (edx / d) * 45 * 0.016;
+        e.y += (edy / d) * 45 * 0.016;
+      }
+
+      // Pickup suction
+      const magR = parseFloat(document.getElementById('mag').value);
+      for (let i = seeds.length - 1; i >= 0; i--) {
+        const s = seeds[i];
+        const dist = Math.hypot(p.x - s.x, p.y - s.y);
+        if (dist < magR) {
+          s.x += ((p.x - s.x) / dist) * 240 * 0.016;
+          s.y += ((p.y - s.y) / dist) * 240 * 0.016;
+        }
+        if (dist < 20) {
+          seeds.splice(i, 1);
+          p.xp++;
+          if (p.xp >= 10) { p.lvl++; p.xp = 0; document.getElementById('lvl').innerText = p.lvl; }
+          document.getElementById('xpCount').innerText = p.xp;
+        }
+      }
+
+      // Render
+      ctx.fillStyle = '#081a26';
+      ctx.fillRect(0, 0, 800, 600);
+
+      // Seeds
+      ctx.fillStyle = '#10b981';
+      for (const s of seeds) { ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI * 2); ctx.fill(); }
+
+      // Bullets
+      ctx.fillStyle = '#38bdf8';
+      for (const b of bullets) { ctx.fillRect(b.x - 3, b.y - 1, 6, 2); }
+
+      // Enemies
+      ctx.fillStyle = '#f59e0b';
+      for (const e of enemies) { ctx.beginPath(); ctx.arc(e.x, e.y, 10, 0, Math.PI * 2); ctx.fill(); }
+
+      // Player
+      ctx.fillStyle = '#22d3ee';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); ctx.fill();
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

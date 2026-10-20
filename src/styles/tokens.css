@@ -1,0 +1,122 @@
+:root {
+  /* Ambient terrain & backgrounds */
+  --color-ground-base: #050f16;
+  --color-ground-secondary: #081a26;
+  --color-ground-elevated: #0c2536;
+  --color-flora-patch: #0d3830;
+  --color-water-margin: #06202e;
+
+  /* Friendly Signal & Player cyan accents */
+  --color-player-body: #22d3ee;
+  --color-player-lamp: #67e8f9;
+  --color-flare-trail: #38bdf8;
+  --color-signal-cyan-dim: #0891b2;
+  --color-signal-cyan-glow: rgba(34, 211, 238, 0.35);
+  --color-signal-cyan-ghost: rgba(34, 211, 238, 0.12);
+  --color-signal-cyan-transparent: rgba(34, 211, 238, 0);
+
+  /* Hostile & Warning amber accents */
+  --color-hostile-core: #f59e0b;
+  --color-danger-amber-bright: #fbbf24;
+  --color-danger-amber-glow: rgba(245, 158, 11, 0.35);
+  --color-danger-amber-ghost: rgba(245, 158, 11, 0.12);
+  --color-danger-amber-transparent: rgba(245, 158, 11, 0);
+  --color-danger-ring: #f43f5e;
+  --color-danger-red-ghost: rgba(244, 63, 94, 0.15);
+
+  /* Flora & XP mint accents */
+  --color-seed-core: #10b981;
+  --color-seed-halo: #34d399;
+  --color-seed-halo-glow: rgba(16, 185, 129, 0.35);
+  --color-seed-ghost: rgba(16, 185, 129, 0.12);
+  --color-seed-transparent: rgba(16, 185, 129, 0);
+
+  /* Health gauge */
+  --color-health-gauge-fill: #f43f5e;
+  --color-health-gauge-track: rgba(244, 63, 94, 0.2);
+
+  /* Shadows */
+  --color-shadow-entity: rgba(0, 0, 0, 0.45);
+  --color-shadow-backdrop: rgba(0, 0, 0, 0.85);
+
+  /* Panels & Overlays */
+  --color-surface-overlay: rgba(8, 24, 36, 0.92);
+  --color-surface-card: rgba(12, 33, 49, 0.78);
+  --color-surface-card-hover: rgba(16, 44, 66, 0.88);
+  --color-surface-card-active: rgba(20, 54, 82, 0.95);
+  --color-panel-border: rgba(34, 211, 238, 0.24);
+  --color-panel-border-subtle: rgba(148, 163, 184, 0.18);
+  --color-panel-border-hover: rgba(34, 211, 238, 0.55);
+  --color-panel-border-active: rgba(34, 211, 238, 0.9);
+
+  /* Portrait Layer Palette */
+  --color-portrait-jacket-dark: #081820;
+  --color-portrait-jacket-mid: #102e3b;
+  --color-portrait-jacket-light: #143c4d;
+  --color-portrait-jacket-border: rgba(34, 211, 238, 0.4);
+  --color-portrait-skin-base: #d8a684;
+  --color-portrait-skin-shadow: #b47854;
+  --color-portrait-skin-deep: #8e5535;
+  --color-portrait-hair-base: #4a403d;
+  --color-portrait-hair-shadow: #2b2320;
+  --color-portrait-hair-highlight: #635652;
+  --color-portrait-feature-dark: #251c19;
+  --color-portrait-feature-lip: #7c3725;
+  --color-portrait-eye-iris: #111827;
+  --color-portrait-eye-highlight: #ffffff;
+
+  /* Soil, Agricultural Furrows & Concrete */
+  --color-soil-furrow-dark: #040b10;
+  --color-soil-furrow-light: #091e2b;
+  --color-moss-dense: #0a3528;
+  --color-moss-fringe: #124838;
+  --color-concrete-base: #1a2936;
+  --color-concrete-rim: #2d3f4e;
+  --color-concrete-crack: #0e1821;
+
+  /* Industrial & Rust */
+  --color-hazard-yellow: #eab308;
+  --color-hazard-stripe: #050f16;
+  --color-rust-plate-dark: #3b1d11;
+  --color-rust-plate-mid: #6e341b;
+  --color-rust-plate-light: #9a4c28;
+  --color-cable-black: #03080e;
+  --color-metal-trim: #334155;
+  --color-metal-rivets: #64748b;
+  --color-beacon-coil-copper: #c2410c;
+  --color-beacon-coil-glow: rgba(56, 189, 248, 0.6);
+  --color-glass-cabin: rgba(34, 211, 238, 0.25);
+  --color-glass-frame: #17303f;
+
+  /* Ambient Lighting & Vignette */
+  --color-vignette-shadow: rgba(3, 7, 12, 0.72);
+  --color-ambient-darkness: rgba(5, 15, 22, 0.45);
+
+  /* Typography */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-secondary-bright: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #050f16;
+
+  --font-display: 'Outfit', 'Space Grotesk', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Outfit', sans-serif;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --touch-target-min: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --shadow-panel: 0 8px 32px 0 rgba(0, 0, 0, 0.56);
+  --shadow-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.35);
+  --shadow-glow-amber: 0 0 20px rgba(245, 158, 11, 0.35);
+  --shadow-glow-mint: 0 0 20px rgba(16, 185, 129, 0.35);
+}

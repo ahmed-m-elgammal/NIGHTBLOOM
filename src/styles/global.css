@@ -1,0 +1,99 @@
+@import './tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-ground-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 30%, #0a2130 0%, #050f16 85%);
+  position: relative;
+}
+
+/* 1280x720 Canvas / Display viewport container with letterbox protection */
+.viewport-frame {
+  width: 1280px;
+  height: 720px;
+  max-width: 100vw;
+  max-height: 100vh;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-ground-base);
+  border: 1px solid var(--color-panel-border);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(34, 211, 238, 0.15);
+}
+
+/* CRT / Tactical scanning line effect - 1-2px thin lines with configurable opacity */
+.viewport-frame::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 2px;
+  z-index: 99;
+  pointer-events: none;
+  opacity: var(--setting-crt-opacity, 0.12);
+  transition: opacity 0.2s ease;
+}
+
+/* Light peripheral vignette - softly darkens corners without crushing scene */
+.viewport-frame::after {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 75%, rgba(5, 15, 22, 0.35) 100%);
+  pointer-events: none;
+  z-index: 98;
+}
+
+/* Low-HP warning edge pulse */
+@keyframes lowHpPulse {
+  0%, 100% { box-shadow: inset 0 0 25px rgba(244, 63, 94, 0.25); }
+  50% { box-shadow: inset 0 0 60px rgba(244, 63, 94, 0.55); }
+}
+
+.low-hp-vignette {
+  animation: lowHpPulse 1.4s ease-in-out infinite;
+}
+
+/* High-contrast focus outline for accessibility */
+button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--color-signal-cyan-bright);
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  color: inherit;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}

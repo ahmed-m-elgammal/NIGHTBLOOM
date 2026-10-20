@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NIGHTBLOOM // Spike S4: Web Audio Synthesis</title>
+  <style>
+    body { background: #050f16; color: #22d3ee; font-family: monospace; padding: 24px; }
+    button { background: #0c2536; color: #f8fafc; border: 1px solid #22d3ee; padding: 10px 16px; margin: 6px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    button:hover { background: #143c4d; }
+    .grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    #log { margin-top: 20px; font-size: 11px; color: #94a3b8; height: 140px; overflow-y: auto; border: 1px solid #1a2936; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h2>SPIKE S4: PROCEDURAL WEB AUDIO SYNTHESIS SUITE</h2>
+  <p style="color: #94a3b8; font-size: 12px;">Zero external audio files. 100% synthesized via native Web Audio API oscillators, noise buffers, and ADSR gain envelopes.</p>
+  
+  <div class="grid">
+    <button onclick="playFlare()">Signal Flare Shot</button>
+    <button onclick="playHit()">Enemy Hit Thud</button>
+    <button onclick="playKill()">Enemy Defeat Pop</button>
+    <button onclick="playPickup()">Seed Pickup Cascade</button>
+    <button onclick="playPulse()">Beacon Pulse Boom</button>
+    <button onclick="playLevelUp()">Level-Up Chime</button>
+    <button onclick="toggleLoop()" id="loopBtn">Start 10-Min Combat Sound Loop</button>
+  </div>
+
+  <div id="log">Click any sound button to unlock browser AudioContext...</div>
+
+  <script>
+    let ctx = null;
+    let seedChime = 0;
+    let loopActive = false;
+    let loopTimer = null;
+
+    function getAudio() {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function log(msg) {
+      const el = document.getElementById('log');
+      el.innerText += '\n' + msg;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function playFlare() {
+      const ac = getAudio();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(880, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.18, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, ac.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.08);
+      log('Played: Signal Flare (880Hz -> 220Hz)');
+    }
+
+    function playHit() {
+      const ac = getAudio();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, ac.currentTime + 0.09);
+      gain.gain.setValueAtTime(0.25, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, ac.currentTime + 0.09);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.09);
+      log('Played: Enemy Hit Thud (140Hz -> 40Hz)');
+    }
+
+    function playKill() {
+      const ac = getAudio();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, ac.currentTime + 0.14);
+      gain.gain.setValueAtTime(0.3, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, ac.currentTime + 0.14);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.14);
+      log('Played: Enemy Defeat Pop (320Hz -> 80Hz)');
+    }
+
+    function playPickup() {
+      const ac = getAudio();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      const baseFreq = 523.25; // C5
+      const note = baseFreq * Math.pow(2, (seedChime % 12) / 12);
+      seedChime++;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(note, ac.currentTime);
+      gain.gain.setValueAtTime(0.15, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, ac.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.12);
+      log(`Played: Seed Pickup Chime (Pitch step +${seedChime % 12} semitones)`);
+    }
+
+    function playPulse() {
+      const ac = getAudio();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(260, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(45, ac.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.4, ac.currentTime);
+      gain.gain.linearRampToValueAtTime(0.001, ac.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.35);
+      log('Played: Beacon Pulse Shockwave (260Hz -> 45Hz Low Swell)');
+    }
+
+    function playLevelUp() {
+      const ac = getAudio();
+      [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ac.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.2, ac.currentTime + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.001, ac.currentTime + idx * 0.08 + 0.2);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(ac.currentTime + idx * 0.08);
+        osc.stop(ac.currentTime + idx * 0.08 + 0.2);
+      });
+      log('Played: Level-Up Major Arpeggio Chime');
+    }
+
+    function toggleLoop() {
+      loopActive = !loopActive;
+      const btn = document.getElementById('loopBtn');
+      if (loopActive) {
+        btn.innerText = 'Stop Combat Sound Loop';
+        btn.style.background = '#f43f5e';
+        loopTimer = setInterval(() => {
+          const r = Math.random();
+          if (r < 0.4) playFlare();
+          else if (r < 0.7) playHit();
+          else if (r < 0.9) playPickup();
+          else playKill();
+        }, 350);
+        log('Started: 10-Minute Simulated Combat Loop (hits ~4/s, shots ~1.5/s, pickups ~2/s)');
+      } else {
+        btn.innerText = 'Start 10-Min Combat Sound Loop';
+        btn.style.background = '#0c2536';
+        clearInterval(loopTimer);
+        log('Stopped Combat Sound Loop.');
+      }
+    }
+  </script>
+</body>
+</html>

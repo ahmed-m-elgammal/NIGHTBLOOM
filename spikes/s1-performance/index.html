@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NIGHTBLOOM // Spike S1: Canvas 2D Performance</title>
+  <style>
+    body { background: #050f16; color: #22d3ee; font-family: monospace; padding: 20px; }
+    canvas { background: #081a26; border: 1px solid #1a2936; display: block; margin-top: 12px; }
+    .hud { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+    button { background: #0c2536; color: #f8fafc; border: 1px solid #22d3ee; padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>SPIKE S1: CANVAS 2D STRESS TEST (PREPRODUCTION.md §3.1)</h2>
+  <div class="hud" id="stats">Profile B: 200 Enemies, 300 Projectiles, 150 Pickups | FPS: measuring...</div>
+  <canvas id="c" width="1280" height="720"></canvas>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const stats = document.getElementById('stats');
+
+    const enemies = [];
+    for (let i = 0; i < 200; i++) {
+      enemies.push({ x: Math.random() * 1280, y: Math.random() * 720, vx: (Math.random() - 0.5) * 60, vy: (Math.random() - 0.5) * 60 });
+    }
+    const projs = [];
+    for (let i = 0; i < 300; i++) {
+      projs.push({ x: Math.random() * 1280, y: Math.random() * 720, vx: (Math.random() - 0.5) * 300, vy: (Math.random() - 0.5) * 300 });
+    }
+    const pickups = [];
+    for (let i = 0; i < 150; i++) {
+      pickups.push({ x: Math.random() * 1280, y: Math.random() * 720 });
+    }
+
+    let frames = 0, lastSec = performance.now(), fps = 60;
+    function loop(now) {
+      frames++;
+      if (now - lastSec >= 1000) {
+        fps = frames;
+        frames = 0;
+        lastSec = now;
+        stats.innerText = `Profile B: 200 Enemies, 300 Projectiles, 150 Pickups | FPS: ${fps} (Pass >= 58 FPS: ${fps >= 58 ? 'PASS' : 'FAIL'})`;
+      }
+
+      ctx.fillStyle = '#081a26';
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Draw Pickups (Mint dots)
+      ctx.fillStyle = '#10b981';
+      for (const p of pickups) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Draw Projectiles (Cyan tracers)
+      ctx.fillStyle = '#38bdf8';
+      for (const pr of projs) {
+        pr.x = (pr.x + pr.vx * 0.016 + 1280) % 1280;
+        pr.y = (pr.y + pr.vy * 0.016 + 720) % 720;
+        ctx.fillRect(pr.x, pr.y, 6, 2);
+      }
+
+      // Draw Enemies (Amber pods)
+      ctx.fillStyle = '#f59e0b';
+      for (const e of enemies) {
+        e.x = (e.x + e.vx * 0.016 + 1280) % 1280;
+        e.y = (e.y + e.vy * 0.016 + 720) % 720;
+        ctx.beginPath(); ctx.arc(e.x, e.y, 8, 0, Math.PI * 2); ctx.fill();
+      }
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
