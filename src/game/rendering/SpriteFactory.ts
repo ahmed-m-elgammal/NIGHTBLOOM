@@ -5,29 +5,18 @@
  * Zero external raster textures. 100% tokenized.
  */
 
-import { createMiraSprite } from './CharacterSprites';
-import { createBeaconSprite } from './BeaconSprite';
-import { createFlowerClusterSprite } from './FloraSprites';
-import { createHarvesterSprite, createPylonPropSprite, createSensorPropSprite } from './PropSprites';
-import { createGlasshouseSprite, createColdFramesSprite } from './LandmarkSprites';
+import { PERSONA_REGISTRY, PersonaSpriteSet, getPersonaSprites } from './personas';
+import { createItemAtlas, ItemAtlas } from './items';
+import type { SpriteBuffer } from './buffer';
 
 export interface SpriteAtlas {
-  mira: {
-    down: HTMLCanvasElement[];
-    up: HTMLCanvasElement[];
-    side: HTMLCanvasElement[];
-  };
-  beacon: HTMLCanvasElement;
-  flowers: HTMLCanvasElement[];
-  props: {
-    harvester: HTMLCanvasElement;
-    pylon: HTMLCanvasElement;
-    sensor: HTMLCanvasElement;
-  };
-  landmarks: {
-    glasshouse: HTMLCanvasElement;
-    coldFrames: HTMLCanvasElement;
-  };
+  personas: Record<string, PersonaSpriteSet>;
+  mira: PersonaSpriteSet; // Direct alias for backwards compatibility
+  items: ItemAtlas;
+  beacon: SpriteBuffer; // Direct alias
+  flowers: SpriteBuffer[]; // Direct alias
+  props: ItemAtlas['props']; // Direct alias
+  landmarks: ItemAtlas['landmarks']; // Direct alias
 }
 
 export class SpriteFactory {
@@ -41,42 +30,21 @@ export class SpriteFactory {
   }
 
   private static createAtlas(): SpriteAtlas {
+    const personas: Record<string, PersonaSpriteSet> = {};
+    for (const [id, generator] of Object.entries(PERSONA_REGISTRY)) {
+      personas[id] = generator();
+    }
+
+    const items = createItemAtlas();
+
     return {
-      mira: {
-        down: [
-          createMiraSprite('down', 0),
-          createMiraSprite('down', 1),
-          createMiraSprite('down', 2),
-          createMiraSprite('down', 3),
-        ],
-        up: [
-          createMiraSprite('up', 0),
-          createMiraSprite('up', 1),
-          createMiraSprite('up', 2),
-          createMiraSprite('up', 3),
-        ],
-        side: [
-          createMiraSprite('side', 0),
-          createMiraSprite('side', 1),
-          createMiraSprite('side', 2),
-          createMiraSprite('side', 3),
-        ],
-      },
-      beacon: createBeaconSprite(),
-      flowers: [
-        createFlowerClusterSprite(64, 5),
-        createFlowerClusterSprite(96, 7),
-        createFlowerClusterSprite(128, 9),
-      ],
-      props: {
-        harvester: createHarvesterSprite(),
-        pylon: createPylonPropSprite(),
-        sensor: createSensorPropSprite(),
-      },
-      landmarks: {
-        glasshouse: createGlasshouseSprite(),
-        coldFrames: createColdFramesSprite(),
-      },
+      personas,
+      mira: personas.hero_mira ?? getPersonaSprites('hero_mira'),
+      items,
+      beacon: items.beacon,
+      flowers: items.flowers,
+      props: items.props,
+      landmarks: items.landmarks,
     };
   }
 }

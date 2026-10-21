@@ -4,11 +4,12 @@
  * Zero external raster assets. Organic alien botany synthesized via Canvas 2D.
  */
 
-import { ThemeTokens } from '../../content/theme/tokens';
-import { createBuffer } from './CharacterSprites';
+import { ThemeTokens } from '../../../content/theme/tokens';
+import { createSpriteBuffer, SpriteBuffer } from '../buffer';
 
-export function createFlowerClusterSprite(size: number, flowerCount: number): HTMLCanvasElement {
-  const { canvas, ctx } = createBuffer(size, size);
+export function createFlowerClusterSprite(size: number, flowerCount: number): SpriteBuffer {
+  const sprite = createSpriteBuffer(size, size);
+  const { ctx } = sprite;
   const cx = size / 2;
   const cy = size / 2;
 
@@ -112,5 +113,5 @@ export function createFlowerClusterSprite(size: number, flowerCount: number): HT
     ctx.fill();
   }
 
-  return canvas;
+  return sprite;
 }

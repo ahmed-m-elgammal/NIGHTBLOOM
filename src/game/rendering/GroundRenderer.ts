@@ -1,29 +1,29 @@
 /**
  * Procedural Agricultural Ground & Nursery Field Generator
  * Authority: spec/Technical Design Document (TDD).md §1.3 & GDD.md §4.1
- * Foundation F-1: Pre-rendered 3200x2400 offscreen cache for zero per-frame redraw.
- * Foundation F-3: Seeded organic scatter (stubble, stones, soil value patches, landmarks).
+ * Foundation F-1: Pre-rendered 3200x2400 static terrain cache for zero per-frame redraw.
+ * Foundation F-3: Seeded organic scatter (stubble, stones, soil value patches).
+ * PB-3: landmarks and props are rendered per frame by WorldPropsRenderer, not baked here.
  */
 
 import { GAME_CONFIG } from '../config/gameConfig';
 import { ThemeTokens } from '../../content/theme/tokens';
 import { SeededRNG } from '../core/rng';
-import { createBuffer } from './CharacterSprites';
-import { SpriteAtlas } from './SpriteFactory';
+import { createCanvasSurface } from './buffer';
 
 export class GroundRenderer {
   private static cachedCanvas: HTMLCanvasElement | null = null;
 
-  public static getGroundCache(atlas: SpriteAtlas): HTMLCanvasElement {
+  public static getGroundCache(): HTMLCanvasElement {
     if (!this.cachedCanvas) {
-      this.cachedCanvas = this.renderOffscreenGround(atlas);
+      this.cachedCanvas = this.renderOffscreenGround();
     }
     return this.cachedCanvas;
   }
 
-  private static renderOffscreenGround(atlas: SpriteAtlas): HTMLCanvasElement {
+  private static renderOffscreenGround(): HTMLCanvasElement {
     const { width: mw, height: mh, furrowRowHeight, borderStrokeWidth } = GAME_CONFIG.map;
-    const { canvas, ctx } = createBuffer(mw, mh);
+    const { canvas, ctx } = createCanvasSurface(mw, mh);
     const rng = new SeededRNG(GAME_CONFIG.map.scatter.seed);
 
     // 1. Organic Loam Base Soil
@@ -131,48 +131,10 @@ export class GroundRenderer {
     ctx.fill();
     ctx.stroke();
 
-    // 7. Hand-Crafted Narrative Landmarks
-    const { glasshouse, coldFrames } = GAME_CONFIG.map.landmarks;
-    ctx.drawImage(
-      atlas.landmarks.glasshouse,
-      glasshouse.x - glasshouse.width / 2,
-      glasshouse.y - glasshouse.height / 2
-    );
-    ctx.drawImage(
-      atlas.landmarks.coldFrames,
-      coldFrames.x - coldFrames.width / 2,
-      coldFrames.y - coldFrames.height / 2
-    );
+    // 7. Spawn-Adjacent Nursery Infrastructure & Service Detail
+    this.drawServiceDetails(ctx, rng);
 
-    // 8. Static Machinery Props (Harvesters, Pylons, Sensors) with subtle transform variation
-    const { harvesters, pylons, sensors } = GAME_CONFIG.map.props;
-
-    for (let h = 0; h < harvesters.length; h++) {
-      const pos = harvesters[h];
-      const sprite = atlas.props.harvester;
-      ctx.save();
-      ctx.translate(pos.x, pos.y);
-      if (h % 2 === 1) ctx.scale(-1, 1); // Mirror second harvester
-      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
-      ctx.restore();
-    }
-
-    for (let p = 0; p < pylons.length; p++) {
-      const pos = pylons[p];
-      const sprite = atlas.props.pylon;
-      ctx.save();
-      ctx.translate(pos.x, pos.y);
-      if (p % 2 === 1) ctx.rotate(0.04);
-      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
-      ctx.restore();
-    }
-
-    for (const pos of sensors) {
-      const sprite = atlas.props.sensor;
-      ctx.drawImage(sprite, pos.x - sprite.width / 2, pos.y - sprite.height / 2);
-    }
-
-    // 9. Perimeter Nursery Security Fence & Stencils
+    // 8. Perimeter Nursery Security Fence & Stencils
     ctx.strokeStyle = ThemeTokens.colors.panelBorderActive;
     ctx.lineWidth = borderStrokeWidth;
     ctx.strokeRect(borderStrokeWidth, borderStrokeWidth, mw - borderStrokeWidth * 2, mh - borderStrokeWidth * 2);
@@ -185,5 +147,90 @@ export class GroundRenderer {
     ctx.fillRect(mw - cornerSize, mh - borderStrokeWidth * 2, cornerSize, borderStrokeWidth * 2);
 
     return canvas;
+  }
+
+  private static drawServiceDetails(
+    ctx: CanvasRenderingContext2D,
+    rng: SeededRNG,
+  ): void {
+    const { serviceHatch, huskSpill } = GAME_CONFIG.map.groundDetails;
+    const halfWidth = serviceHatch.width / 2;
+    const halfHeight = serviceHatch.height / 2;
+
+    // Fallen husks and straw give the lantern beam something to reveal.
+    ctx.fillStyle = ThemeTokens.colors.strawStubble;
+    for (let index = 0; index < huskSpill.count; index++) {
+      const angle = rng.nextFloat(0, Math.PI * 2);
+      const distance = rng.nextFloat(0, huskSpill.radius);
+      const huskX = huskSpill.x + Math.cos(angle) * distance;
+      const huskY = huskSpill.y + Math.sin(angle) * distance * 0.55;
+      const huskLength = rng.nextFloat(2, 5);
+      ctx.fillRect(huskX, huskY, huskLength, 1.5);
+    }
+
+    ctx.fillStyle = ThemeTokens.colors.shadowEntity;
+    ctx.beginPath();
+    ctx.ellipse(
+      serviceHatch.x,
+      serviceHatch.y + halfHeight * 0.42,
+      halfWidth * 0.62,
+      halfHeight * 0.38,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(serviceHatch.x, serviceHatch.y);
+    ctx.fillStyle = ThemeTokens.colors.groundElevated;
+    ctx.fillRect(-halfWidth, -halfHeight, serviceHatch.width, serviceHatch.height);
+
+    ctx.strokeStyle = ThemeTokens.colors.concreteRim;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-halfWidth, -halfHeight, serviceHatch.width, serviceHatch.height);
+
+    // Top-lit service plate edge separates the hatch from the soil.
+    ctx.strokeStyle = ThemeTokens.colors.midgroundRimLight;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-halfWidth + 2, -halfHeight + 2);
+    ctx.lineTo(halfWidth - 2, -halfHeight + 2);
+    ctx.stroke();
+
+    // Recessed access seams and plate rivets.
+    ctx.strokeStyle = ThemeTokens.colors.concreteCrack;
+    ctx.lineWidth = 1;
+    for (let seam = -1; seam <= 1; seam++) {
+      ctx.beginPath();
+      ctx.moveTo(seam * 16, -halfHeight + 4);
+      ctx.lineTo(seam * 16, halfHeight - 4);
+      ctx.stroke();
+    }
+    ctx.fillStyle = ThemeTokens.colors.metalRivets;
+    for (const rivetX of [-halfWidth + 6, halfWidth - 6]) {
+      for (const rivetY of [-halfHeight + 6, halfHeight - 6]) {
+        ctx.beginPath();
+        ctx.arc(rivetX, rivetY, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Small irrigation valve cap, not a pickup or a hostile accent.
+    ctx.fillStyle = ThemeTokens.colors.rustPlateMid;
+    ctx.beginPath();
+    ctx.arc(0, 2, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = ThemeTokens.colors.metalRivets;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-4, 2);
+    ctx.lineTo(4, 2);
+    ctx.stroke();
+
+    ctx.fillStyle = ThemeTokens.colors.metalTrim;
+    ctx.fillRect(-halfWidth + 8, halfHeight - 9, 15, 4);
+    ctx.restore();
   }
 }

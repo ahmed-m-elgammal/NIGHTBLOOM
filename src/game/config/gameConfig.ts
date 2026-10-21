@@ -83,8 +83,12 @@ export const GAME_CONFIG = {
       ],
     },
     landmarks: {
-      glasshouse: { x: 2240, y: 1340, width: 220, height: 140 },
-      coldFrames: { x: 980, y: 1080, width: 190, height: 150 },
+      glasshouse: { x: 2100, y: 1250, width: 220, height: 140 },
+      coldFrames: { x: 1120, y: 1270, width: 190, height: 150 },
+    },
+    groundDetails: {
+      serviceHatch: { x: 1750, y: 1340, width: 78, height: 46 },
+      huskSpill: { x: 1698, y: 1378, radius: 38, count: 18 },
     },
     scatter: {
       seed: 1042,

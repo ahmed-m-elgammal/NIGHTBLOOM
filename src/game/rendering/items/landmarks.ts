@@ -5,15 +5,16 @@
  * Zero external raster assets. 100% Canvas 2D vector synthesis.
  */
 
-import { ThemeTokens } from '../../content/theme/tokens';
-import { createBuffer } from './CharacterSprites';
+import { ThemeTokens } from '../../../content/theme/tokens';
+import { createSpriteBuffer, SpriteBuffer } from '../buffer';
 
 /**
  * Collapsed Nursery Glasshouse (220x140 px buffer)
  * East of the central road — rusted iron trusses, shattered panes, climbing vines.
  */
-export function createGlasshouseSprite(): HTMLCanvasElement {
-  const { canvas, ctx } = createBuffer(220, 140);
+export function createGlasshouseSprite(): SpriteBuffer {
+  const sprite = createSpriteBuffer(220, 140);
+  const { ctx } = sprite;
   const cx = 110;
   const cy = 70;
 
@@ -30,6 +31,16 @@ export function createGlasshouseSprite(): HTMLCanvasElement {
   ctx.fillRect(cx - 95, cy + 25, 190, 20);
   ctx.strokeRect(cx - 95, cy + 25, 190, 20);
 
+  // Top-lit knee-wall cap gives the landmark a readable midground edge.
+  ctx.fillStyle = ThemeTokens.colors.concreteRim;
+  ctx.fillRect(cx - 95, cy + 25, 190, 4);
+  ctx.strokeStyle = ThemeTokens.colors.midgroundRimLight;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 93, cy + 26);
+  ctx.lineTo(cx + 93, cy + 26);
+  ctx.stroke();
+
   // Concrete expansion joints
   ctx.strokeStyle = ThemeTokens.colors.concreteCrack;
   ctx.lineWidth = 1;
@@ -44,6 +55,9 @@ export function createGlasshouseSprite(): HTMLCanvasElement {
   ctx.fillStyle = ThemeTokens.colors.machineryBronze;
   ctx.fillRect(cx - 85, cy + 10, 75, 16);
   ctx.fillRect(cx + 10, cy + 10, 75, 16);
+  ctx.fillStyle = ThemeTokens.colors.rustPlateMid;
+  ctx.fillRect(cx - 85, cy + 10, 75, 2);
+  ctx.fillRect(cx + 10, cy + 10, 75, 2);
 
   // 3. Structural Steel Gable Roof Trusses (Arches & Ribs)
   ctx.strokeStyle = ThemeTokens.colors.glasshouseSteel;
@@ -67,6 +81,20 @@ export function createGlasshouseSprite(): HTMLCanvasElement {
   ctx.beginPath();
   ctx.moveTo(cx - 90, cy - 35);
   ctx.quadraticCurveTo(cx - 10, cy - 20, cx + 90, cy - 38);
+  ctx.stroke();
+
+  // Lit upper edge of the ridge and outer truss posts.
+  ctx.strokeStyle = ThemeTokens.colors.midgroundRimLight;
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 90, cy - 37);
+  ctx.quadraticCurveTo(cx - 10, cy - 22, cx + 88, cy - 40);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - 85, cy + 24);
+  ctx.lineTo(cx - 85, cy - 10);
+  ctx.moveTo(cx + 75, cy + 24);
+  ctx.lineTo(cx + 75, cy - 10);
   ctx.stroke();
 
   // 4. Broken Translucent Glass Panes
@@ -115,15 +143,16 @@ export function createGlasshouseSprite(): HTMLCanvasElement {
   ctx.quadraticCurveTo(cx + 70, cy + 15, cx + 65, cy - 10);
   ctx.stroke();
 
-  return canvas;
+  return sprite;
 }
 
 /**
  * Nursery Cold-Frame Hoop Beds (190x150 px buffer)
  * West of the road — parallel nursery rows with arched wire hoops and seedling trays.
  */
-export function createColdFramesSprite(): HTMLCanvasElement {
-  const { canvas, ctx } = createBuffer(190, 150);
+export function createColdFramesSprite(): SpriteBuffer {
+  const sprite = createSpriteBuffer(190, 150);
+  const { ctx } = sprite;
   const cx = 95;
   const cy = 75;
 
@@ -148,6 +177,12 @@ export function createColdFramesSprite(): HTMLCanvasElement {
     // Weathered Plastic Poly-Film Cover
     ctx.fillStyle = ThemeTokens.colors.coldFramePlastic;
     ctx.fillRect(cx - 75, rowY - 12, 150, 22);
+    ctx.strokeStyle = ThemeTokens.colors.midgroundRimLight;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 73, rowY - 11);
+    ctx.lineTo(cx + 73, rowY - 11);
+    ctx.stroke();
 
     // Arched Wire Hoops spanning each row
     ctx.strokeStyle = ThemeTokens.colors.metalTrim;
@@ -178,8 +213,10 @@ export function createColdFramesSprite(): HTMLCanvasElement {
   // Connecting Irrigation Manifold Valve on the Left
   ctx.fillStyle = ThemeTokens.colors.machineryBronze;
   ctx.fillRect(cx - 88, cy - 42, 6, 88);
+  ctx.fillStyle = ThemeTokens.colors.midgroundRimLight;
+  ctx.fillRect(cx - 88, cy - 42, 1.5, 88);
   ctx.fillStyle = ThemeTokens.colors.amberMuted;
   ctx.fillRect(cx - 90, cy - 2, 8, 8); // Brass valve handle
 
-  return canvas;
+  return sprite;
 }

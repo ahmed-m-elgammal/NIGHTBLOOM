@@ -15,6 +15,7 @@ export class PlayerEntity {
   public facingAngle: number = 0;
   public isMoving: boolean = false;
   public walkTime: number = 0;
+  public personaId: string = 'hero_mira';
 
   constructor(startX: number = GAME_CONFIG.player.spawnX, startY: number = GAME_CONFIG.player.spawnY) {
     this.x = startX;

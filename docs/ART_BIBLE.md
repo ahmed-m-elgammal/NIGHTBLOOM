@@ -1,6 +1,7 @@
 # NIGHTBLOOM: The Last Signal — Art Bible
 
-**Status:** v1.0 production contract, pre-Milestone B. PB-6/PB-7 shell and accessibility implementation is in review; PB-8 has not started.
+**Status:** v1.0 production contract, pre-Milestone B. PB-6/PB-7 shell and accessibility are implemented and committed; PB-1-PB-8 are implemented in the working tree and awaiting review. PB-8's opening-frame gate passes informally; the review is pending.
+**Doc sync (2026-10-21):** World-atlas paths are rebased onto `personas/` and `items/`; the PB-6/PB-7 shell checkpoint is accepted for sequencing; PB-1-PB-2 migrated the atlas to the 2× `SpriteBuffer` contract, PB-3 moved props/landmarks into the per-frame world layer, PB-4 split lighting into `LightingCache` plus a reset-per-frame composite, PB-5 split the staging enemies into one family module each, and PB-8 implemented the opening-frame composition, midground edge values and Mira's alpha-derived closed rim. The PB-8 pass is implemented and awaiting review; the full three-tester/colorblind matrix remains open.
 **Authority:** `GDD.md` §7; `spec/Technical Design Document (TDD).md` §1.3 and §5; `spec/UX Specification and UI Design System.md` §5–6; `STORY_BIBLE.md` §9; `CHARACTERS.md` §3–4 and §8. If this document conflicts with those, they win.
 **Companion:** `docs/ASSET_MANIFEST.md`.
 **Scope:** every v1 world sprite, entity, VFX, telegraph, environment, icon, portrait and panel. Audio is out of scope for visual style rules; it is inventoried in the companion manifest.
@@ -23,7 +24,7 @@
 | Device pixel ratio | Capped at 2.0 via `Math.min(devicePixelRatio, 2.0)`, with a fallback of 1. |
 | Map | 3200×2400 px, camera follow time constant 0.12 s, clamped to map bounds. |
 | Asset source | 100% code-drawn at boot. No raster textures, no image generation, no external art files. |
-| Atlas | Offscreen buffers cached by `SpriteFactory`. Current buffers are 1× logical; target is a 2× backing store with logical-size metadata (§17). |
+| Atlas | Offscreen buffers cached by `SpriteFactory`. Current recipes are still 1× raw canvases. PB-1 implements a `SpriteBuffer` with a fixed 2× backing store and logical-size metadata in `buffer.ts`; PB-2 migrates all 21 buffers. |
 | Colors | `ThemeTokens` only. Zero hex/rgba in recipes. `npm run lint:colors` must pass. |
 | Randomness | `SeededRNG` only. No `Math.random`, `Date.now` or `performance.now` in generation or simulation. |
 | Time | Fixed 60 Hz tick. Visual time derives from tick/timeSec, not wall clock. |
@@ -54,7 +55,7 @@ The visual tension is between soft living things and hard damaged machines; betw
 
 | Family | Primary shapes | Edge treatment | Core / accent | Motion character |
 |---|---|---|---|---|
-| **Friendly life** (Mira, nightbloom, glow-seed, Wren) | Circles, rounded petals, radial clusters, soft appendages | Clean vector, no dark silhouette outline, no serration; internal stem/vein lines allowed | Cyan lamp or mint halo | Breathing, drifting, precise |
+| **Friendly life** (Mira, nightbloom, glow-seed, Wren) | Circles, rounded petals, radial clusters, soft appendages | Clean vector, no dark silhouette outline, no serration; internal stem/vein lines allowed; Mira's gameplay silhouette may use the closed cyan `miraRimClosed` rim | Cyan lamp or mint halo | Breathing, drifting, precise |
 | **Hostile life** (Seedling, Bloomed Seedling, Thornrunner, Rustwing, Briarheart, Stormroot) | Wedges, points, serrated petals, asymmetric tangles | Dark outline, 1–2 px at 1×, hard tips | Amber core, never mint | Twitch, snap, heavy |
 | **Neutral industrial** (beacon, Old Core stages 0–1, harvester, pylon, sensor, glasshouse) | Rectangles, hexagons, octagons, cables, rivets | Hard vector edges, thin metal trim | Muted amber or cyan indicator | Idle hum, rotor, sway |
 | **Signal** (beacon light, Pulse, flare, UI active) | Concentric circles, arcs, hairlines, reticle brackets | Perfect geometry, thin strokes | Cyan/white | Pulse, expand, lock |
@@ -76,6 +77,7 @@ The visual tension is between soft living things and hard damaged machines; betw
 | Ground base | 3–7% | `groundBase`, `soilFurrowDark` | Never above 10% |
 | Ground detail | 5–12% | `groundSecondary`, `soilPatchLight`, furrows | ≤8% local delta from base |
 | Props / landmarks | 10–25% | `concreteBase`, `rustPlateMid`, `glasshouseSteel` | Must read as midground, not entities |
+| Midground edge highlight | 30–45% | `midgroundRimLight` | ≤1.5 px top-facing edge only; never a fill |
 | Flora body | 12–25% | `mossDense`, `floraPatch` | Glow may push to 60% |
 | Friendly entity | 35–60% | Mira coat, cyan lamp | Lamp may reach 90% |
 | Hostile body | 10–25% | `mossDense`, `rustPlateDark` | Dark outline 3–6% |
@@ -93,6 +95,7 @@ These are approximate **HSL lightness bands** (perceptual value), not WCAG lumin
 **AB-VL-05:** Hostile shots and telegraphs punch through darkness through the light pool. Ordinary projectiles may be dimmed outside the lantern.
 **AB-VL-06:** One bright thing per ~200 px of play space. If the beacon, a flower patch, an amber core and a telegraph compete in the same area, remove one.
 **AB-VL-07:** Contact shadows are value anchors, not decoration. Grounded entities use a compact ellipse; flying entities use a smaller, softer offset ellipse.
+**AB-VL-08:** Mira's closed rim uses `miraRimClosed` at 1.5–2 logical px, outside the character only. It is a friendly signal accent, never a fill or a hostile-style outline. Props/landmarks may use `midgroundRimLight` at ≤1.5 px on top-facing edges; it never becomes a full outline or an entity glow.
 
 ---
 
@@ -100,13 +103,13 @@ These are approximate **HSL lightness bands** (perceptual value), not WCAG lumin
 
 | Role | Tokens | Allowed use | Forbidden use |
 |---|---|---|---|
-| **Cyan / signal** | `playerBody`, `playerLamp`, `flareTrail`, `signalCyanDim`, `signalCyanBright`, `signalCyanGlow`, `signalCyanGhost`, `signalCyanTransparent`, `beaconGlowInner`, `beaconGlowOuter`, `lanternBeamBroad`, `lanternBeamCore`, `lanternBeamFoot`, `lanternBeamFaint`, `lanternBeamCoreFade` | Mira, friendly shots, beacon, Pulse, UI active, friendly rim light | Enemy bodies, XP, hostile cores |
+| **Cyan / signal** | `playerBody`, `playerLamp`, `flareTrail`, `signalCyanDim`, `signalCyanBright`, `signalCyanGlow`, `signalCyanGhost`, `signalCyanTransparent`, `beaconGlowInner`, `beaconGlowOuter`, `lanternBeamBroad`, `lanternBeamCore`, `lanternBeamFoot`, `lanternBeamFaint`, `lanternBeamCoreFade`, `miraRimClosed` | Mira, friendly shots, beacon, Pulse, UI active, friendly rim light | Enemy bodies, XP, hostile cores |
 | **Mint / life** | `seedCore`, `seedHalo`, `seedHaloGlow`, `seedGhost`, `seedTransparent` | XP, nightbloom, healing, Bloomguard, friendly pickups | Hostile cores, enemy shot cores |
 | **Amber / hostility** | `hostileCore`, `dangerAmber`, `dangerAmberBright`, `dangerAmberGlow`, `dangerAmberGhost` | Hostile cores, enemy shots, boss weak point, telegraph accents | Friendly highlights, primary UI, generic machinery |
 | **Muted amber / industrial** | `amberMuted`, `rustPlateDark`, `rustPlateMid`, `rustPlateLight`, `machineryBronze` | Old Core stages 0–2, harvesters, pylons, UI insignia | Danger telegraphs, hostile weak points |
 | **Red / danger** | `dangerRing`, `dangerRedGhost`, `healthGaugeFill`, `healthGaugeTrack` | Telegraphs, health, low-HP pulses, danger borders | Decoration, friendly highlights |
 | **Moss / flora** | `floraPatch`, `mossDense`, `mossFringe`, `strawStubble` | Flora bodies, ground cover, nightbloom | Hostile body lacking points, outline or amber core |
-| **Neutral / industrial** | `concreteBase`, `concreteRim`, `concreteCrack`, `metalTrim`, `metalRivets`, `cableBlack`, `glassCabin`, `glassFrame`, `glasshousePane`, `coldFramePlastic` | Structures, outlines, shadows, glass | Large areas of pure black |
+| **Neutral / industrial** | `concreteBase`, `concreteRim`, `concreteCrack`, `metalTrim`, `metalRivets`, `cableBlack`, `glassCabin`, `glassFrame`, `glasshousePane`, `coldFramePlastic`, `midgroundRimLight` | Structures, outlines, shadows, glass, top-facing prop/landmark edges | Large areas of pure black; entity cores |
 | **White / specular** | `textPrimary`, `portraitEyeHighlight` | Specular highlights, text, 60 ms hit flash | Large fills |
 
 **AB-PL-01:** No new hex. Add a semantic token first, then use it.
@@ -121,7 +124,7 @@ These are approximate **HSL lightness bands** (perceptual value), not WCAG lumin
 
 - **Global ambient:** cool top-left, `ambientTwilightDarkness` at 0.62. No directional cast shadows beyond contact.
 - **Key hierarchy:** beacon (cyan, 280–310 px) → Mira lamp (cyan, 180 px) → nightbloom (mint, 60–120 px) → hostile cores (amber, 20–40 px, local only) → UI emissive.
-- **Rim light:** friendly entities only, cyan, 1–2 px at 1×, from the beacon/lamp side. No rim on hostiles; their edge is a dark outline.
+- **Rim light:** friendly entities only, cyan, 1.5–2 px at 1×, from the beacon/lamp side. Mira may use a closed `miraRimClosed` rim for gameplay readability; other friendly assets use the directional edge. No rim on hostiles; their edge is a dark outline. Props use the neutral `midgroundRimLight` edge, not the friendly rim.
 - **Contact shadow:** ellipse, offset +4 to +8 px y, alpha 0.45, no blur. Flying: offset +10 to +14 px y, alpha 0.3.
 - **Hostile glow:** a core highlight, not a flashlight. It never floods the ground enough to wash out a telegraph.
 - **Bloom warning:** nightbloom intensity rises monotonically over `warningLeadSec` (45 s start). No flashing. The Chapter 3 water-margin patch stays dark.
@@ -299,7 +302,7 @@ Tendril counts, glow values, scrap ratios and stage sizes are **initial art targ
 
 **AB-ENV-01:** Props use muted amber (`amberMuted`) or cyan indicators, never danger amber. A prop is not an enemy.
 **AB-ENV-02:** Landmarks are composition anchors and story evidence. They must read as places, not as obstacles with painted warning stripes.
-**AB-ENV-03:** Baked props/landmarks must be re-evaluated at DPR 2. If they blur, move them to the dynamic prop layer rather than accepting softness.
+**AB-ENV-03:** Props and landmarks live in the dynamic 2× prop layer; the ground cache is terrain only. Do not bake them back into the cache.
 
 ### 10.4 Water margins
 
@@ -463,6 +466,8 @@ An asset that fails any gate is not shippable, regardless of how good it looks z
 
 **PB-6/PB-7 evidence (2026-10-20):** AB-QA-16 passes informally at 1280×720, 1024×768 and 1920×1080 for the shell: no clipping or unintended scrollbars, the 64/36 safe area holds for interactive HUD, the XP rail stays full-bleed, and canvas/DOM scale together. AB-QA-14 passes for pause/settings controls, focus and Escape flow in the same build; title-screen DOM focus remains an F2 gap. These are live-build checks, not the formal §14 atlas harness.
 
+**PB-8 evidence (2026-10-21):** AB-QA-17 passes informally on the 1280×720 spawn frame: the glasshouse and cold frames are readable and clear of HUD panels, the harvester/sensor are uncovered, and the lantern reveals a service hatch plus husk/straw detail. AB-QA-04 measures 5.77:1 minimum and 9.65:1 median rim contrast against road, and 6.85:1/11.47:1 against soil; AB-QA-02 (grayscale), the 50% brightness check and AB-QA-06 (DPR 2, 2560×1440 backing) were reviewed. The rim's antialiased outer fringe is softer than its core and is not used as the contrast boundary. AB-QA-01's three-tester response check and AB-QA-03's colorblind matrices remain open, so this is an informal pass rather than the full §14 harness.
+
 ---
 
 ## 15. Production workflow
@@ -478,7 +483,7 @@ An asset that fails any gate is not shippable, regardless of how good it looks z
 
 **AB-WF-01:** Add the token before the recipe. Add the config value before the magic number.
 **AB-WF-02:** Pre-render at boot. No per-frame L-systems, noise fields or path generation for entities.
-**AB-WF-03:** Split by family before a file reaches 300 lines. `staging/EnemySprites.ts` is already at 296 lines and must be split when wired.
+**AB-WF-03:** Split by family before a file reaches 300 lines. PB-5 split the five staging enemies into `staging/enemies/*.ts`; keep one enemy family per `*Sprites.ts` file and use `staging/EnemySprites.ts` only as the stable re-export barrel.
 **AB-WF-04:** Every generated family needs a deterministic seed and a documented parameter range.
 **AB-WF-05:** Do not commit disposable spike art to `src/`. Spikes live in `spikes/` or a dev-only route.
 
@@ -528,8 +533,8 @@ These are real gaps in the current working tree. They are recorded here so they 
 
 | Gap | Impact | Required action | Milestone |
 |---|---|---|---|
-| Atlas buffers are 1× logical, drawn under a DPR-scaled context | All sprites soften at DPR 2 | Introduce a `SpriteBuffer` with logical size and a 2× backing store; update consumers to draw at logical size | Before B |
-| Ground cache bakes props and landmarks at 1× | Blur at DPR 2; no animation or y-sort | Keep soil cache at 1×; move props/landmarks to a dynamic 2× layer | Before B |
+| Atlas buffers were 1× logical, drawn under a DPR-scaled context | All sprites soften at DPR 2 | PB-1/PB-2 are implemented: all 21 sprites use a logical size with a 2× backing store. PB-8 reviewed the production frame at DPR 2; the formal three-tester/colorblind harness remains open | Before B |
+| Ground cache baked props and landmarks at 1× | Blur at DPR 2; no animation or y-sort | PB-3 is implemented: the soil cache is static terrain only; props/landmarks draw per frame from 2× sources. PB-4 resets the light buffer each frame. PB-8 resolved the remaining value separation and opening composition | Before B |
 | Staging enemies use friendly colors and round petals | Seedling reads as nightbloom | Apply §5/§8 palette and serration pass before wiring | B |
 | Only Mira portrait exists | Radio scenes cannot show Sela/Tavi/Idris | Add layered portraits; never reuse Mira for another speaker | F1 (earlier if radio requires) |
 | Ability icons are generic | Abilities are not distinguishable at a glance | Author the canonical 5-icon set | B / C |
@@ -540,15 +545,15 @@ These are real gaps in the current working tree. They are recorded here so they 
 | Old Core size is not yet config-backed | Stage growth may drift | Add stage sizes and seed to config | D2 |
 | Roster wording “8 base enemies” appears in older planning | Contradicts canon | Canon is 4 base + Bloomed variant + Stormroot; treat other variants as data-only | Now |
 | HUD combat data is placeholder | Perceived quality is lower than the art | Wire real combat/XP/objective data through the existing snapshot (not an art task, but a release gate) | B |
-| Mira's final lit silhouette is about 1.5–1.8:1 against road/soil | Fails AB-VL-02/AB-QA-04; disappears in grayscale and at 50% brightness | Add a closed rim/contact pool; raise the coat midtone only if the measured gate still fails | Before B |
-| Opening frame clips the glasshouse and cold frames | The first view reads as an empty field despite F-3 density | Reframe landmark coordinates and verify one hero landmark in the spawn capture | Before B |
-| Props are drawn under the flower layer | Flora can cover the harvester, pylon or sensor | Draw order: ground → flowers → props/landmarks → beacon → player → lighting | Before B |
+Resolved in PB-8 (2026-10-21): the opening frame now shows the glasshouse and cold frames clear of HUD panels, with the harvester and sensor uncovered; prop/landmark value separation uses `midgroundRimLight` without turning the field into a prop clutter. Mira uses an alpha-derived closed `miraRimClosed` rim at 1.8 px, the external near-black torso contour is gone, and hair draws before the face. The production spawn frame measures 5.77:1 minimum and 9.65:1 median rim contrast against road, and 6.85:1/11.47:1 against soil; grayscale, 50% brightness and DPR 2 were reviewed. See `docs/PRE_B_VISUAL_FOUNDATION_PLAN.md` §6.6 for the full checkpoint.
 
-Resolved in the PB-6/PB-7 working tree, pending review: the shared 1280×720 stage and frame-border overflow (PB-6), the 64/36 HUD safe area and bottom-left dock placement (PB-6), and the settings hit envelopes, focus ring, dialog semantics, state-aware Escape and safe quit default (PB-7). See `docs/PRE_B_VISUAL_FOUNDATION_PLAN.md` §11 for measured evidence. The title screen still lacks world art, title DOM focus and a Settings entry; those remain F2.
+Resolved and committed in PB-6/PB-7: the shared 1280×720 stage and frame-border overflow (PB-6), the 64/36 HUD safe area and bottom-left dock placement (PB-6), and the settings hit envelopes, focus ring, dialog semantics, state-aware Escape and safe quit default (PB-7). See `docs/PRE_B_VISUAL_FOUNDATION_PLAN.md` §6.6 and §6.7 for measured evidence. The title screen still lacks world art, title DOM focus and a Settings entry; those remain F2.
+
+PB-1-PB-8 are implemented in the working tree and awaiting review: the 2× `SpriteBuffer` atlas, per-frame props/landmarks, the entity/prop renderer split, the `LightingCache` split with a per-frame light-buffer reset, the staging enemy family split, and PB-8's opening-frame composition. PB-4's frame-1 composite is pixel-identical to the baseline; the reset fixes the steady-state accumulation that hid unlit props. PB-5 is staging-only and leaves the production bundle unchanged. PB-8's opening-frame gate passes informally; the full three-tester/colorblind matrix remains open.
 
 ### Decisions to close before Milestone B
 
-1. **Atlas DPR.** Approve a 2× backing store with logical-size metadata. Recommended: yes; sprite memory is small compared with the ground cache.
+1. **Atlas DPR (implemented in PB-1/PB-2; awaiting review).** Use a 2× backing store with logical-size metadata; sprite memory is small compared with the ground cache.
 2. **Pivot.** Approve bottom-center for grounded entities, center for flying/projectiles/UI. Recommended: yes; it enables y-sort and correct contact shadows.
 3. **Seedling palette.** Approve `mossDense` body + `cableBlack` outline + `hostileCore` core. Recommended: yes; it resolves the friendly/hostile collision.
 4. **UI direction.** Approve the “field terminal” direction over a military dossier. Recommended: yes; it fits the nursery/keeper fiction.

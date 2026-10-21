@@ -68,6 +68,15 @@
   --color-portrait-eye-highlight: #ffffff;
   --color-rim-light-cyan: rgba(56, 189, 248, 0.55);
 
+  /* Mira Sprite 4-Tone Material Ramp & Selective Outlines */
+  --color-mira-jacket-highlight: #276b85;
+  --color-mira-jacket-trim: #4593a8;
+  --color-mira-outline-jacket: #08141d;
+  --color-mira-outline-skin: #2d170e;
+  --color-mira-outline-boot: #090f14;
+  --color-mira-boot-welt: #4f687a;
+  --color-mira-pants-highlight: #1d3b4d;
+
   /* Soil, Agricultural Furrows & Concrete */
   --color-soil-furrow-dark: #040b10;
   --color-soil-furrow-light: #091e2b;

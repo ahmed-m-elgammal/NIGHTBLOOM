@@ -4,12 +4,13 @@
  * Zero external raster assets. High-definition vector synthesis.
  */
 
-import { ThemeTokens } from '../../content/theme/tokens';
-import { createBuffer } from './CharacterSprites';
+import { ThemeTokens } from '../../../content/theme/tokens';
+import { createSpriteBuffer, SpriteBuffer } from '../buffer';
 
-export function createBeaconSprite(): HTMLCanvasElement {
+export function createBeaconSprite(): SpriteBuffer {
   const size = 160;
-  const { canvas, ctx } = createBuffer(size, size);
+  const sprite = createSpriteBuffer(size, size);
+  const { ctx } = sprite;
   const cx = size / 2;
   const cy = size / 2;
 
@@ -158,5 +159,5 @@ export function createBeaconSprite(): HTMLCanvasElement {
   ctx.fillStyle = ThemeTokens.colors.metalTrim;
   ctx.fillRect(cx - 3, cy - 52, 6, 4);
 
-  return canvas;
+  return sprite;
 }

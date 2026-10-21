@@ -76,6 +76,16 @@ export const ThemeTokens = {
     portraitEyeHighlight: '#ffffff',
     rimLightCyan: 'rgba(56, 189, 248, 0.55)',
 
+    // Mira Sprite 4-Tone Material Ramp & Selective Outlines
+    miraJacketHighlight: '#276b85',
+    miraJacketTrim: '#4593a8',
+    miraOutlineJacket: '#08141d',
+    miraOutlineSkin: '#2d170e',
+    miraOutlineBoot: '#090f14',
+    miraBootWelt: '#4f687a',
+    miraPantsHighlight: '#1d3b4d',
+    miraRimClosed: '#7ceaf8',
+
     // Soil, Agricultural Furrows & Concrete
     soilFurrowDark: '#040b10',
     soilFurrowLight: '#091e2b',
@@ -101,6 +111,7 @@ export const ThemeTokens = {
     cableBlack: '#03080e',
     metalTrim: '#334155',
     metalRivets: '#64748b',
+    midgroundRimLight: '#587181',
     beaconCoilCopper: '#c2410c',
     beaconCoilGlow: 'rgba(56, 189, 248, 0.6)',
     glassCabin: 'rgba(34, 211, 238, 0.25)',

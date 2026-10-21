@@ -1,10 +1,10 @@
 # Pre-B Visual Foundation Plan
 
-**Status:** PB-6 and PB-7 implemented in the working tree; user review pending. Workstreams 1 and 2 remain gated; PB-8 has not started.
-**Last updated:** 2026-10-20 (PB-6/PB-7 implementation checkpoint)
+**Status:** PB-6 and PB-7 implemented and committed; the shell checkpoint is accepted for sequencing. PB-1-PB-8 are implemented in the working tree and awaiting review. Workstream 2 remains gated behind the PB-8 review.
+**Last updated:** 2026-10-21 (PB-8 opening-frame readability and composition)
 **Scope:** Workstream 1 — atlas DPR and renderer seams; Workstream 2 — flora L-system spike; Workstream 3 — pre-B viewport, HUD and accessibility hardening, including the opening-frame readability gate.
 **Authority:** `AGENTS.md` §4–7; `docs/ART_BIBLE.md`; `docs/ASSET_MANIFEST.md`; `spec/Technical Design Document (TDD).md` §1.1, §1.3 and §5; `spec/UX Specification and UI Design System.md` §2–6; `spec/Project Roadmap and Milestones.md`.
-**Approval gate:** PB-6 and PB-7 were authorized for implementation and are now awaiting review. The live audit in §6 remains the historical baseline; §11 records the implementation checkpoint. Do not begin PB-8 or Workstream 1 until the shell/accessibility checkpoint is approved. Do not integrate Workstream 2 into production until the spike is reviewed.
+**Approval gate:** PB-6 and PB-7 are accepted for sequencing. PB-1-PB-8 are implemented; stop for the PB-8 review before starting Workstream 2. The live audit in §6 remains the historical baseline; §6.6, §6.7 and the PB-8 checkpoint record the shell, accessibility and opening-frame evidence. Do not integrate Workstream 2 into production until its spike is reviewed.
 
 ---
 
@@ -32,22 +32,23 @@ No Old Core, weather, enemy wiring, or gameplay changes are part of this plan.
 
 ## 1. Current baseline
 
-Verified against the working tree on 2026-10-20.
+Verified against the working tree on 2026-10-21.
 
 | Area | Current state | Consequence |
 |---|---|---|
 | Atlas | 21 buffers: 12 Mira frames, 1 beacon, 3 flora, 3 props, 2 landmarks | Small enough to pre-render at boot |
-| Sprite buffers | `createBuffer()` lives in `CharacterSprites.ts` and creates 1× canvases | Sprites are upscaled by the DPR-scaled renderer and soften at DPR 2 |
-| `SpriteFactory` | Static atlas built once; stores `HTMLCanvasElement` values | No logical-size metadata; draw calls use `sprite.width`, which is the backing width |
-| Renderer | `Renderer.ts` is 204 lines; draws ground, flowers, beacon, player, lighting, vignette | Will grow when props/landmarks move out of the ground cache |
-| Ground cache | 3200×2400 at 1×, about 30.7 MB; bakes props and landmarks | Props/landmarks blur and cannot animate or y-sort |
-| Lighting | `LightingPass.ts` is 287 lines; 1280×720 masks at 1× | Soft masks are acceptable at 1×, but the file has little headroom |
-| Staging | `staging/EnemySprites.ts` is 296 lines for five enemies | Must split before Milestone B wiring |
-| Flora | Three fixed variants: 64/96/128 buffers, 5/7/9 blossoms; `Renderer` ignores patch `radius` and `petals` | Visible repetition across 41 patches |
-| Tests | Only `src/tests/unit/rng.test.ts`; no renderer or buffer tests | New buffer math and draw-size rules need unit coverage |
+| Sprite buffers | `buffer.ts` exports `CanvasSurface`/`SpriteBuffer`; `createSpriteBuffer()` creates a logical size with a 2× backing store. `createBuffer()` is now a compatibility wrapper with no production callers | Atlas sprites and draw math preserve logical dimensions at DPR 2; production 1× surfaces use `createCanvasSurface` |
+| `SpriteFactory` | Static atlas built once; `personas` and `items` contain `SpriteBuffer` values with logical-size metadata and compatibility aliases for legacy consumers | Consumers draw at logical size through `drawSpriteCentered`; backing dimensions no longer leak into draw calls |
+| Persona/item split | Mira lives in `personas/mira/`; beacon, flora, props and landmarks live in `items/`; all recipes use `createSpriteBuffer` | PB-2 is implemented; PB-5 reused the same one-family-per-file pattern for the staging enemies |
+| Renderer | `Renderer.ts` is 103 lines and orchestrates camera, ground, layers, lighting and vignette; entity and prop drawing live in separate renderers | Renderer no longer grows with each world entity; PB-4 split lighting without touching layer order |
+| Ground cache | 3200×2400 at 1×, about 30.7 MB; static terrain and road only | Props/landmarks are drawn dynamically from the 2× atlas; PB-3 is implemented and awaiting review |
+| Lighting | `LightingPass.ts` is 192 lines and `LightingCache.ts` is 138 lines; 1280×720 masks at 1×; the light buffer is cleared every frame | PB-4 removed the ambient-alpha accumulation defect while keeping frame-1 pixels identical |
+| Staging | `staging/EnemySprites.ts` is an 8-line re-export barrel; five family modules live in `staging/enemies/` and are 60-78 lines each | PB-5 implementation is complete and awaiting review; staging remains outside the production bundle until Milestone B wiring |
+| Flora | Three fixed variants: 64/96/128 buffers, 5/7/9 blossoms; `WorldEntityRenderer` ignores patch `radius` and `petals` | Visible repetition across 41 patches |
+| Tests | `stage.test.ts`, `rng.test.ts`, `buffer.test.ts` and `worldProps.test.ts`; 27 tests | Buffer contract, math and prop culling are covered; DPR sharpness and layer order remain manual review checks |
 | Typecheck scope | `tsconfig.json` includes `src` only | `staging/` and `spikes/` are not covered by `npm run typecheck` |
 | E2E/content gates | `test:e2e` and `validate:content` are echo stubs | They cannot be cited as visual or content evidence |
-| UI shell | Each screen owns `.viewport-frame`; no shared 1280×720 stage; HUD margins are 24/16; dossier scrolls at 1024 | Workstream 3 fixes the shell, safe area and measured opening frame |
+| UI shell | PB-6 shared 1280×720 stage, 64/36 safe area, dossier fit and PB-7 focus/dialog behaviour are implemented and committed; PB-8 keeps the opening composition clear of that safe area | Shell is accepted for sequencing; PB-8 composition/value separation is implemented and awaiting review |
 
 ### Current draw-size assumptions
 
@@ -108,7 +109,7 @@ Why fixed 2×:
 
 Alternative considered: `scale = min(devicePixelRatio, 2)` at boot. This saves about 2–3 MB at DPR 1 but requires rebuilding the atlas when DPR changes. Not recommended for this pass.
 
-**Open decision:** confirm fixed 2×. If adaptive scale is required, every sprite recipe needs a scale parameter and `SpriteFactory` needs a rebuild path.
+**Confirmed:** fixed 2×. PB-1 implements the fixed-scale contract; PB-2 migrates the recipes. Adaptive scale would require every recipe to take a scale parameter and `SpriteFactory` to rebuild, so it is rejected for this pass.
 
 ### D2 — Separate sprite and full-screen buffer helpers
 
@@ -167,8 +168,7 @@ Visual sharpness and draw-size preservation are verified manually at DPR 1, 1.5 
 
 ```text
 src/game/rendering/
-  SpriteBuffer.ts          # new: contracts, 1x/2x constructors, draw helpers
-  RenderDpr.ts             # new: pure DPR clamp helper, or fold into SpriteBuffer.ts
+  buffer.ts                # contracts, DPR math, 1x/2x constructors, draw helper
   SpriteFactory.ts         # migrated atlas types
   Renderer.ts              # orchestrator only
   WorldEntityRenderer.ts   # new: flowers, beacon, player
@@ -176,12 +176,20 @@ src/game/rendering/
   GroundRenderer.ts        # static ground only
   LightingPass.ts          # composite and light pool
   LightingCache.ts         # new: stamps, light buffer, vignette
-  CharacterSprites.ts      # Mira; no buffer helper
-  BeaconSprite.ts
-  FloraSprites.ts
-  PropSprites.ts
-  LandmarkSprites.ts
-  MiraHeadRenderer.ts
+  personas/
+    index.ts               # persona registry
+    types.ts               # PersonaSpriteSet / generator contracts
+    mira/
+      head.ts              # head, cowl, face, hair
+      body.ts              # torso, coat, gear, antenna
+      index.ts             # composite stride frames
+  items/
+    index.ts               # item atlas factory
+    types.ts               # ItemAtlas contracts
+    beacon.ts
+    flora.ts
+    props.ts
+    landmarks.ts
 
 staging/enemies/
   index.ts
@@ -244,17 +252,20 @@ Implementation must compute scalars and call `drawImage` once; no per-frame obje
 
 #### PB-1 — Buffer contract and pure math
 
-**Files:** `src/game/rendering/SpriteBuffer.ts`, `src/game/rendering/RenderDpr.ts`, `src/tests/unit/spriteBuffer.test.ts`.
+**Files:** `src/game/rendering/buffer.ts`, `src/tests/unit/buffer.test.ts`.
 
 **Work:**
 
+- Extend the existing `buffer.ts`; do not add a second buffer module.
 - Add `CanvasSurface`, `SpriteBuffer`, `SPRITE_SCALE`.
-- Add `createCanvasSurface` and `createSpriteBuffer`.
+- Add `createCanvasSurface(width, height)` for 1× full-screen and ground surfaces.
+- Add `createSpriteBuffer(width, height)` with a fixed 2× backing store and a context scaled by `SPRITE_SCALE`.
+- Keep `createBuffer` as a compatibility wrapper around `createCanvasSurface`; current recipes remain 1× until PB-2.
 - Add `resolveRenderDpr(devicePixelRatio, maxDpr)` with fallback 1 and cap at `maxDpr`.
 - Add `getBackingSize(logical, scale)` using `Math.ceil`.
-- Add `getSpriteDrawWidth(logicalWidth, scale)` and `getCenteredDrawX(x, logicalWidth, scale)`.
-- Add `drawSpriteCentered`.
-- Move `createBuffer` usage out of `CharacterSprites.ts` in PB-2; keep this package compiling.
+- Add `getSpriteDrawWidth(logicalWidth, scale)`, `getCenteredDrawX(x, logicalWidth, scale)` and the matching Y helper.
+- Add `drawSpriteCentered` using logical dimensions and one `drawImage` call.
+- Do not migrate any recipe or renderer draw call in PB-1; that is PB-2.
 
 **Tests:**
 
@@ -267,24 +278,30 @@ Implementation must compute scalars and call `drawImage` once; no per-frame obje
 - `getBackingSize(64, 2) === 128`; `getBackingSize(65, 1.5) === 98`; no fractional results.
 - `getSpriteDrawWidth(64, 1) === 64`; `getSpriteDrawWidth(64, 0.9) === 57.6`.
 - `getCenteredDrawX(100, 64, 1) === 68`; `getCenteredDrawX(100, 64, 2) === 36`.
+- `getCenteredDrawY` mirrors the X contract.
 - `SPRITE_SCALE <= GAME_CONFIG.viewport.maxDpr`.
 
-**Acceptance:** `npm run typecheck`, `npm run lint`, `npm run test` pass. No renderer behavior changes yet.
+**Acceptance:** `npm run typecheck`, `npm run lint`, `npm run test` pass. No renderer behavior changes yet; the current atlas is still 1× after this package.
+
+**Implementation checkpoint (2026-10-21):** `buffer.ts` now exports the `CanvasSurface` and `SpriteBuffer` contracts, `SPRITE_SCALE = 2`, `createCanvasSurface`, `createSpriteBuffer`, the compatibility `createBuffer`, DPR/backing/draw math and `drawSpriteCentered`. `buffer.test.ts` covers the contract, the 2× backing store/context scale, the 1× compatibility wrapper, DPR fallback/cap, ceil backing sizes, draw-size/centre math and one-call centred drawing. `npm run typecheck`, `npm run lint`, `npm run test` (22/22), `npm run lint:colors`, `npm run lint:tokens`, `npm run build` and `npm run check:budget` (73.93 KB gzipped) pass. No recipe migration was performed in PB-1: all 21 atlas buffers remained 1× until PB-2. PB-1 is implemented in the working tree; PB-2 consumes its contract.
 
 #### PB-2 — Migrate sprite recipes and atlas
 
-**Files:** `CharacterSprites.ts`, `BeaconSprite.ts`, `FloraSprites.ts`, `PropSprites.ts`, `LandmarkSprites.ts`, `SpriteFactory.ts`, `staging/EnemySprites.ts` (import only).
+**Files:** `src/game/rendering/personas/**/*.ts`, `src/game/rendering/items/**/*.ts`, `SpriteFactory.ts`, `staging/EnemySprites.ts` (import only).
 
 **Work:**
 
-- Change every sprite recipe to return `SpriteBuffer` and use `createSpriteBuffer`.
-- Remove `createBuffer` from `CharacterSprites.ts`.
-- Change `SpriteAtlas` fields to `SpriteBuffer`.
+- Change every sprite recipe and persona/item atlas type to return `SpriteBuffer` and use `createSpriteBuffer`.
+- Remove `createBuffer` from the sprite paths after the migration; keep it only for legacy 1× callers.
+- Change `PersonaSpriteSet`, `ItemAtlas` and `SpriteAtlas` fields to `SpriteBuffer`.
 - Keep all logical buffer sizes and all drawing coordinates unchanged.
 - Keep `SpriteFactory` static boot-time creation.
-- Update staging imports so the file still parses; full split is PB-5.
+- Update staging imports so the file still parses; the full split was completed in PB-5.
+- If the current Mira art pass is retained, capture and approve its DPR 1 visual baseline separately; do not treat the changed look as the PB-2 visual-match baseline.
 
-**Acceptance:** Atlas has the same 21 buffers and same logical sizes. Mira, beacon, flowers, props and landmarks look identical at DPR 1, apart from sharpness.
+**Acceptance:** Atlas has the same 21 buffers and same logical sizes. After the art baseline is approved, Mira, beacon, flowers, props and landmarks look unchanged at DPR 1 apart from sharpness.
+
+**Implementation checkpoint (2026-10-21):** all 21 atlas buffers now use `SpriteBuffer` and `createSpriteBuffer`; logical sizes are unchanged. Persona recipes, item recipes, `SpriteFactory` and the staging import were migrated, and `createBuffer` remains only for the lighting path. `npm run typecheck`, `npm run lint`, `npm run lint:colors`, `npm run lint:tokens` and `npm run test` (22/22 at this checkpoint) pass. The retained Mira art pass is still provisional: its DPR 1 visual baseline is deferred to PB-8 and is not treated as the PB-2 visual-match baseline.
 
 #### PB-3 — Renderer and world props layer
 
@@ -304,6 +321,8 @@ Implementation must compute scalars and call `drawImage` once; no per-frame obje
 
 **Acceptance:** PB-3 does not change any object's configured position or size; it only moves rendering out of the cache. PB-8 may later reposition landmarks as a separate approved art change. Props/landmarks are no longer baked; they are sharp at DPR 2. Flower patches can no longer cover the harvester, pylon or sensor in the spawn frame. Frame time does not regress.
 
+**Implementation checkpoint (2026-10-21):** `GroundRenderer` now builds static terrain only and `getGroundCache()` no longer takes the atlas. `WorldPropsRenderer` draws the glasshouse, cold frames, harvesters, pylons and sensors per frame from 2× `SpriteBuffer` sources with extent-based viewport culling; harvester #2 remains mirrored and pylon #2 remains rotated by 0.04 rad. `WorldEntityRenderer` owns flowers, beacon and player, and `Renderer` is a 103-line orchestrator for camera, ground, layer order, lighting and vignette. The implemented order is ground → flowers → landmarks/props → beacon → player → lighting → vignette. `worldProps.test.ts` adds five culling cases; the suite is 27/27. `typecheck`, `lint`, `test`, `lint:colors`, `lint:tokens`, `build` and `check:budget` pass at 74.11 KB gzipped. A DPR 2 canvas at 2560×1440 confirmed 2× prop sources and sharp landmark/prop crops; a temporary lighting bypass was used only for visual inspection. The existing 1× lighting buffer is not cleared per frame and increasingly hides unlit props, so props remain hard to read at spawn in normal play; lighting behavior is unchanged by PB-3 and AUD-07 remains for PB-4/PB-8.
+
 #### PB-4 — Lighting split and 1× surface migration
 
 **Files:** `LightingPass.ts`, new `LightingCache.ts`.
@@ -320,7 +339,9 @@ Implementation must compute scalars and call `drawImage` once; no per-frame obje
 
 **If the split causes any visual difference:** revert only PB-4, keep the import migration in a smaller change, and record the split as deferred.
 
-#### PB-5 — Split staging enemy sprites
+**Implementation checkpoint (2026-10-21):** `LightingCache` now owns the 1× light buffer, radial light stamps and screen vignette, all created through `createCanvasSurface`. `LightingPass` is 192 lines and owns settings, the 64-light pool, composite order, spores and the public delegation API; `LightingCache` is 138 lines. The light buffer is reset at the start of every composite, removing the ambient-alpha accumulation that progressively hid unlit props and field detail; this is an intentional lighting-layer correction that contributes to AUD-07, not a split regression. Frame-1 canvas A/B is pixel-identical to the pre-PB-4 baseline at darkness 0.60 and 0.75, reduced motion on and off, and DPR 1 and 2 (SHA-256 hashes match in all four captures; DPR 2 backing remains 2560×1440). A 120-frame stepped run retains the opening composition and prop readability instead of darkening toward opaque, and a real-time 5-second run shows the harvester, sensors and glasshouse remain legible. `typecheck`, `lint`, `lint:colors`, `lint:tokens`, `test` (27/27), `build` and `check:budget` pass at 73.95 KB gzipped; the DPR 1 runtime sample reported no page errors. PB-8 subsequently resolved the opening-frame composition, prop value separation and Mira silhouette contrast (see §6.6).
+
+#### PB-5 - Split staging enemy sprites
 
 **Files:** `staging/EnemySprites.ts`, new `staging/enemies/*.ts`.
 
@@ -333,26 +354,28 @@ Implementation must compute scalars and call `drawImage` once; no per-frame obje
 
 **Acceptance:** No production bundle change. The staging files are ready for Milestone B. Note that `staging/` is outside `tsconfig`; this split is reviewed by inspection until B wiring.
 
+**Implementation checkpoint (2026-10-21):** `staging/EnemySprites.ts` is now an 8-line stable re-export barrel. The five family modules live under `staging/enemies/`: `SeedlingSprites.ts` (60 lines), `BloomedSeedlingSprites.ts` (60), `ThornrunnerSprites.ts` (78), `RustwingSprites.ts` (61), `BriarheartSprites.ts` (69), plus an 11-line `index.ts` registry. All five still return `SpriteBuffer` through `createSpriteBuffer`; the frame parameters and drawing code are unchanged. No production module imports staging. The production build is byte-identical to PB-4: `index-mcT1PKKH.js` SHA-256 `1943A558598701CF05D05FFA919EA4199980D69AA17268C719BC501F5260A22B` and `index-BSzwLSL_.css` SHA-256 `32BF4E38B32282CC15BCE5C0B08C9BBC4CB5AC385FB57C51724EF1CA788BC820`, 73.95 KB gzipped. A one-off strict `tsc` pass over `staging/EnemySprites.ts` with the project target/module/lib flags passed; `npm run typecheck` still intentionally covers `src` only. Review is by inspection until Milestone B imports the staging barrel.
+
 ### 4.4 File-by-file impact
 
 | File | Change | Risk |
 |---|---|---|
-| `SpriteBuffer.ts` | New contracts, constructors, draw helper | Low |
-| `RenderDpr.ts` | New pure DPR clamp | Low |
-| `CharacterSprites.ts` | Remove `createBuffer`; return `SpriteBuffer` | Medium: 12 Mira frames |
-| `BeaconSprite.ts` | Return `SpriteBuffer` | Low |
-| `FloraSprites.ts` | Return `SpriteBuffer`; no variant redesign | Low |
-| `PropSprites.ts` | Return `SpriteBuffer` for 3 props | Low |
-| `LandmarkSprites.ts` | Return `SpriteBuffer` for 2 landmarks | Low |
-| `SpriteFactory.ts` | Atlas stores `SpriteBuffer` | Medium: all consumers |
+| `buffer.ts` | Add contracts, 1×/2× constructors, DPR and draw math; keep `createBuffer` compatibility | Low |
+| `personas/mira/head.ts`, `body.ts`, `index.ts` | Migrate Mira frames to `SpriteBuffer` | Medium: 12 Mira frames; body is already 289 lines |
+| `items/beacon.ts` | Return `SpriteBuffer` | Low |
+| `items/flora.ts` | Return `SpriteBuffer`; no variant redesign | Low |
+| `items/props.ts` | Return `SpriteBuffer` for 3 props | Low |
+| `items/landmarks.ts` | Return `SpriteBuffer` for 2 landmarks | Low |
+| `SpriteFactory.ts` | Atlas stores `SpriteBuffer`; remove compatibility aliases where safe | Medium: all consumers |
 | `Renderer.ts` | Orchestrator only; logical draws | Medium |
 | `WorldEntityRenderer.ts` | New flowers/beacon/player layer | Medium |
 | `WorldPropsRenderer.ts` | New props/landmarks layer | Medium |
 | `GroundRenderer.ts` | Remove atlas, props/landmarks; 1× surface | Medium |
 | `LightingPass.ts` | Use `LightingCache`; 1× surfaces | High: visual composite |
 | `LightingCache.ts` | New stamps/vignette/light buffer | High: visual composite |
-| `staging/EnemySprites.ts` | Split and migrate | Low: not in build |
-| `src/tests/unit/spriteBuffer.test.ts` | New tests | Low |
+| `staging/EnemySprites.ts` | Reduce to stable re-export barrel | Low: not in build |
+| `staging/enemies/*.ts` | New one-file-per-family modules and registry | Low: not in build |
+| `src/tests/unit/buffer.test.ts` | New DPR/backing/draw-size tests | Low |
 
 ### 4.5 DPR and resize behavior
 
@@ -453,15 +476,17 @@ Pass `reducedMotion` as a boolean from `Renderer`; do not let the entity layer q
 - 64-light pool and registration;
 - composite sequence;
 - spores;
-- public API delegation to `LightingCache`.
+- public API delegation to `LightingCache`;
+- clearing the shared light buffer before each ambient fill, so twilight alpha cannot accumulate frame over frame.
 
 Acceptance:
 
 - same composite order;
-- same alpha values;
+- same alpha values on a fresh buffer;
 - same 64-light cap;
 - same zero-GC pool behavior;
-- no new per-frame allocations.
+- no new per-frame allocations;
+- the frame-1 composite remains pixel-identical while steady-state readability is no longer destroyed by accumulation.
 
 ### 4.9 Staging enemy split
 
@@ -479,7 +504,7 @@ No visual changes. No production import. This is preparation for Milestone B.
 
 New unit tests:
 
-`src/tests/unit/spriteBuffer.test.ts`
+`src/tests/unit/buffer.test.ts`
 
 - DPR fallback and cap.
 - Backing-size rounding.
@@ -572,7 +597,7 @@ Then perform the manual QA matrix.
 
 - PB-1 and PB-2 can be reverted together; no save data or gameplay changes.
 - PB-3 can be reverted independently; ground cache returns to baked props/landmarks.
-- PB-4 can be reverted independently; lighting returns to the 287-line file.
+- PB-4 can be reverted independently; lighting returns to the 287-line file and the ambient-alpha accumulation defect returns.
 - PB-5 has no production impact and can be reverted without touching the build.
 - No migrations, storage keys, or content schemas are touched.
 
@@ -586,7 +611,7 @@ Workstream 1 is done when:
 - The atlas is 2×; the render target is still capped at DPR 2.
 - Ground cache is 1× and contains no props/landmarks.
 - Props/landmarks draw per frame in the correct order.
-- `Renderer.ts`, `LightingPass.ts` and `staging/EnemySprites.ts` are split and under 300 lines.
+- `Renderer.ts`, `LightingPass.ts`, `LightingCache.ts` and `staging/enemies/*.ts` are split and under 300 lines; `staging/EnemySprites.ts` is only the barrel.
 - New unit tests pass.
 - Manual DPR 1/1.5/2 QA passes.
 - No new dependencies.
@@ -805,7 +830,7 @@ The spike is ready for review when:
 Only after explicit approval:
 
 - Promote the pure generator to `src/game/rendering/flora/`.
-- Move the Canvas drawing into `FloraSprites.ts`.
+- Move the Canvas drawing into `items/flora.ts` (or the Workstream 2 spike if integration is deferred).
 - `SpriteFactory` builds eight `SpriteBuffer` variants.
 - `Renderer` selects a variant per patch:
   - preferred: explicit optional `variant` on each patch;
@@ -910,7 +935,7 @@ Limits: Milestone B enemies do not exist yet, so this audit cannot judge combat 
 | AUD-04 | High — spec | HUD safe margins do not match the UX spec | Top HUD is 24 px from the sides and 16 px from the top; required safe area is 64 px horizontal / 36 px vertical. The ability dock is correctly bottom-left per UX §4.2, but sits at 24 px, outside the safe area. The pause button is 17 px from the top. | PB-6 | Interactive HUD sits in unsafe/edge areas and the dock crowds the frame edge |
 | AUD-05 | Medium — accessibility | Settings and pause modal are not keyboard-safe | Range inputs measure 16 px high and the checkbox 18 px; neither has a visible focus ring (`outline: none` resolved). Escape from Settings closes the whole pause flow and resumes the game. Focus stays on the underlying Pause button; Tab is not trapped; no `role="dialog"`/`aria-modal`. | PB-7 | Keyboard and assistive-tech players cannot reliably operate or leave the menu |
 | AUD-06 | Medium — sharpness | DPR 2 canvas is soft while DOM text is crisp | 2560×1440 backing, but all 21 atlas buffers are 1×; player, beacon and flowers are visibly blurred in a device-scale crop. | Workstream 1, PB-1/PB-2 | The UI looks higher resolution than the game world; HiDPI review remains invalid |
-| AUD-07 | Medium — world perception | Field props, scatter and lantern detail are not perceptible at spawn | The data contains 6 props and 2 landmarks, but the spawn view shows roughly eight flower clusters and no clearly readable prop; the harvester at (1240,1420) and sensor at (1320,1150) are inside the camera yet disappear into the ground. The lantern light mask reveals mostly flat road/soil, not a readable beam. | PB-3 draw order + PB-8 | Density exists in data but not in the player's eyes; the lantern fantasy does not read |
+| AUD-07 | Medium — world perception | Field props, scatter and lantern detail are not perceptible at spawn | The data contains 6 props and 2 landmarks, but the spawn view shows roughly eight flower clusters and no clearly readable prop; the harvester at (1240,1420) and sensor at (1320,1150) are inside the camera yet disappear into the ground. The lantern light mask reveals mostly flat road/soil, not a readable beam. | PB-3 draw order + PB-4 light-buffer reset + PB-8 | Density exists in data but not in the player's eyes; the lantern fantasy does not read |
 | AUD-08 | Medium — art identity | Title screen has no world art; 1920×1080 shows a 1280×720 floating window | The title is a dashboard/card composition with no nursery silhouette, beacon beam, spores or world vignette. At 1920 the frame stays 1280×720, leaving 320 px side and 180 px top/bottom surround. | Milestone F1; document the stage cap in PB-6 | The first screen does not sell the botanical world; large displays feel letterboxed rather than cinematic |
 | AUD-09 | Medium — content quality | Dossier and loadout still read as a developer data sheet | Raw keys such as `projectileSpeed`, `damageReduction`, `jumpRange`, `buffDuration`; 10–12 px copy; loadout leaves roughly 300 px of empty lower screen; ability cards have `role="button"` but no key activation. | Milestone F2; shell fixes from PB-6 only | The reachable dossier undersells the character and looks unfinished |
 | AUD-10 | Low — polish/a11y | Browser chrome and focus semantics are incomplete | Repeated favicon 404; title custom focus leaves `document.activeElement` on `BODY`; no title-screen Settings entry; destructive quit action is the solid red primary button while Cancel is secondary. | PB-7 favicon, modal focus and destructive default; Milestone F2 for title focus/settings and the full destructive-action hierarchy | Console noise; assistive tech does not see the title selection; the destructive path is visually privileged |
@@ -955,7 +980,7 @@ This is the existing Workstream 1 problem and is not re-opened by this audit. Th
 
 The live opening frame is the evidence. The 41-patch data is present, but the eye sees repeated five-, seven- and nine-petal stars, a flat road and no clearly readable prop. The harvester at (1240,1420) and the sensor at (1320,1150) are in the initial camera, but both vanish into the ground; the flower layer is drawn after the baked prop layer and can cover them, though value separation is the primary failure. The lantern mask brightens the ground but there is almost no texture in the lit area to reveal.
 
-**Required:** use the corrected draw order (flowers below props/landmarks), raise the prop/landmark value separation, and ensure at least one prop and one landmark read at spawn. The lantern must reveal a midground feature; increasing light alpha without adding readable detail does not solve it. The flora variety fix remains Workstream 2.
+**Required:** use the corrected draw order (flowers below props/landmarks), keep the per-frame light-buffer reset so ambient darkness cannot conceal props, raise the prop/landmark value separation, and ensure at least one prop and one landmark read at spawn. The lantern must reveal a midground feature; increasing light alpha without adding readable detail does not solve it. The flora variety fix remains Workstream 2.
 
 #### AUD-08 — title and large-screen presentation
 
@@ -974,7 +999,7 @@ Terminology note: **`F-1` and `F-2` in this table are the external analysis's Ti
 | Tier 0 quick wins complete | Letterbox, SVG glyphs and the visual title keyboard path are observable; the CI-only budget/guard checks were not re-run | No rework; verify the full T0 list again in the final QA matrix |
 | F-1 ground cache complete | `GroundRenderer` baked cache is present; soil/furrows/road/fence are cached | Keep the soil cache. **D3 partially supersedes F-1** by removing props and landmarks from the cache so they stay sharp and can be y-sorted later. This is an additive correction, not a redo. |
 | F-2 darkness complete | `LightingPass`, darkness slider and composite are present and visibly active | Keep F-2. Tune the default/vignette only through PB-8 and the art-bible value targets. Do not rebuild the pass. |
-| F-3 density complete | 41 patches, 48 soil patches, 120 stubble, 60 stones, 6 props, 2 landmarks are in config; the spawn frame still reads sparse | Do **not** rewrite density. Add the perception and opening-composition gate in PB-8; fix draw order in PB-3. |
+| F-3 density complete | 41 patches, 48 soil patches, 120 stubble, 60 stones, 6 props, 2 landmarks are in config; the spawn frame still reads sparse | Do **not** rewrite density. PB-3 has fixed draw order; add the perception and opening-composition gate in PB-8. |
 | F-4 Mira lift complete | 12 Mira buffers (3 directions × 4 frames) exist; final contrast is still 1.5–1.8:1 | Keep the 4-frame stride. Add the measured silhouette fix in PB-8. |
 | F-7 accent split complete | `dangerAmberBright` and muted amber prop/UI tokens are present | No action in this pass |
 | F-5 deferred | No interpolation path is present | Stay deferred |
@@ -1063,7 +1088,7 @@ Workstream 3 is deliberately split. PB-6 and PB-7 are shell/accessibility fixes 
 
 **Goal:** the first 1280×720 frame shows a readable Mira, at least one hero landmark, at least one prop and the botanical field, so the player understands where they are and what they control.
 
-**Files:** `src/game/config/gameConfig.ts`; `src/game/rendering/Renderer.ts`; the new `WorldPropsRenderer.ts` from PB-3; `src/game/rendering/CharacterSprites.ts`; `src/game/rendering/GroundRenderer.ts`; `src/content/theme/tokens.ts`; `docs/ART_BIBLE.md` only if a new named token/value rule is approved.
+**Files:** `src/game/config/gameConfig.ts`; the `WorldPropsRenderer.ts` and `WorldEntityRenderer.ts` layer order from PB-3; `src/game/rendering/items/props.ts`; `items/landmarks.ts`; the new `items/rim.ts` helper; `src/game/rendering/personas/mira/*.ts`, including the new `silhouette.ts`; `src/game/rendering/GroundRenderer.ts`; `src/content/theme/tokens.ts`; `docs/ART_BIBLE.md` for the two approved tokens below. `Renderer.ts` needed no further change because the PB-3 order was already correct.
 
 **Work:**
 
@@ -1082,6 +1107,10 @@ Workstream 3 is deliberately split. PB-6 and PB-7 are shell/accessibility fixes 
 - The lantern reveals a midground feature; the player's light is visible as directed light, not just a circular haze.
 - The opening frame still shows the beacon as the primary landmark and does not turn the scene into a cluttered prop field.
 - No gameplay, collision, spawn, enemy or save data changed. Any coordinate change is visual-only and reviewed in the diff.
+
+**Implementation checkpoint (2026-10-21):** The glasshouse moved to `(2100,1250)` and the cold frames to `(1120,1270)`. Both are fully visible in the spawn frame, clear of the 64/36 HUD safe area and outside the road/beacon cluster; the harvester at `(1240,1420)` and sensor at `(1320,1150)` remain clear of flower bounds. A visual-only service hatch at `(1750,1340)` and a husk/straw spill at `(1698,1378)` sit in the rightward lantern falloff, so the beam reveals a midground feature without collision or spawn changes. Value separation uses the new `midgroundRimLight` token (`#587181`) on top-facing prop/landmark edges at ≤1.5 logical px via `items/rim.ts`; the harvester chassis was lifted to `metalTrim`, and the glasshouse ridge/knee wall, cold-frame rails, pylon and sensor received edge separation. Props and landmarks keep their 10–25% mass bands and remain midground objects, not entities.
+
+Mira now draws in the order contact shadow → alpha-derived closed rim → character. The rim is 1.8 logical px of the new `miraRimClosed` token (`#7ceaf8`); the near-black external torso contour was removed and hair now draws before the face. On the final 1280×720 DPR 1 canvas, edge-adjacent rim pixels measure a minimum of **5.77:1 against road** and **6.85:1 against soil**; the medians are **9.65:1** and **11.47:1**. The 50% brightness capture retains median core contrast of 3.31:1/3.50:1 and Mira remains identifiable; the antialiased outer fringe is not the silhouette core. Grayscale, 50% brightness and DPR 2 (2560×1440 backing) captures were reviewed: the glasshouse and cold frames read, the beacon remains the primary landmark, and the frame avoids a cluttered prop field. A 1920×1080 capture keeps the 1280×720 stage centred at the documented cap, with the 64/36 HUD safe area intact. Local evidence is `.playwright-mcp/pb8-v3-spawn-1280.png`, `pb8-v3-spawn-dpr2.png`, `pb8-v3-spawn-grayscale.png`, `pb8-v3-spawn-half-brightness.png` and `pb8-v3-spawn-1920.png` (ignored, not committed). `npm run ci` passes typecheck, lint, color/token lint, 27/27 tests, build and the 74.80 KB gzipped budget; `git diff --check` is clean. The full three-tester/colorblind manual matrix remains a later combined gate and is not claimed here.
 
 ### 6.7 Workstream 3 QA matrix
 
@@ -1153,14 +1182,14 @@ Rollback is file-local: PB-6 can revert the shell wrapper and CSS; PB-7 can reve
 | Step | Work | Gate |
 |---|---|---|
 | 0 | Approve art bible, manifest and this plan, including §6 | User approval |
-| 1 | PB-6 fixed stage, safe area and HUD placement | Typecheck, lint, test; 1024/1280/1920 stage QA |
-| 2 | PB-7 settings, modal focus and favicon | Typecheck, lint, test; keyboard QA; user review checkpoint |
-| 3 | PB-1 buffer contract and tests | Typecheck, lint, test |
+| 1 | PB-6 fixed stage, safe area and HUD placement | Typecheck, lint, test; 1024/1280/1920 stage QA; accepted |
+| 2 | PB-7 settings, modal focus and favicon | Typecheck, lint, test; keyboard QA; accepted |
+| 3 | PB-1 buffer contract and tests | Typecheck, lint, test; implemented; user review checkpoint |
 | 4 | PB-2 sprite recipes and atlas migration | Typecheck, lint, test; DPR 1 visual match |
 | 5 | PB-3 renderer/world props split and corrected draw order | Typecheck, lint, test, build; DPR 1/2 visual |
-| 6 | PB-4 lighting split | Visual A/B; if different, revert split |
-| 7 | PB-5 staging split | Inspection; no production impact |
-| 8 | PB-8 opening-frame composition/readability, then the combined Workstream 1 + 3 gate | Measured 3:1, landmark/prop visibility, full manual QA matrix; user review checkpoint |
+| 6 | PB-4 lighting split and 1× migration | Frame-1 visual A/B exact; per-frame reset fixes accumulation; typecheck, lint, test, build; implemented; user review checkpoint |
+| 7 | PB-5 staging split | Inspection and strict staging typecheck; production bundle hash unchanged; implemented; user review checkpoint |
+| 8 | PB-8 opening-frame composition/readability | Implemented: measured 3:1 (5.77:1 minimum), landmark/prop visibility, grayscale/50%/DPR 2 captures; user review checkpoint. The remaining combined Workstream 1 + 3 manual matrix (three testers, colorblind matrices) stays open. |
 | 9 | Build Workstream 2 spike | Spike tests + preview |
 | 10 | Review Workstream 2 | User approval |
 | 11 | Integrate flora | Production gates + field QA |
@@ -1174,10 +1203,10 @@ Each step is a separate commit. Do not mix the flora spike with the atlas migrat
 
 | # | Decision | Recommendation | Impact if changed |
 |---|---|---|---|
-| 1 | Fixed 2× atlas vs adaptive `min(DPR, 2)` | Fixed 2× | Adaptive needs scale parameters and atlas rebuild on DPR change |
+| 1 | Fixed 2× atlas vs adaptive `min(DPR, 2)` | Confirmed and implemented in PB-1: fixed 2× | Adaptive needs scale parameters and atlas rebuild on DPR change |
 | 2 | Ground cache 1× vs 2× | 1× + per-frame props/landmarks | 2× costs about 123 MB |
-| 3 | Split `LightingPass` in this pass | Yes, separate commit | Deferring keeps 287-line file and leaves 13 lines of headroom |
-| 4 | Split `staging/EnemySprites.ts` now | Yes, mechanical split | Deferring makes B wiring riskier |
+| 3 | Split `LightingPass` in this pass | Implemented in PB-4: 192-line `LightingPass` plus 138-line `LightingCache`; light buffer reset per frame | Deferring keeps the 287-line file and the ambient-alpha accumulation defect |
+| 4 | Split `staging/EnemySprites.ts` now | Implemented in PB-5: five family modules plus `enemies/index.ts`; `EnemySprites.ts` is the stable barrel | Deferring would make B wiring riskier |
 | 5 | Bottom-center pivots / y-sort | Defer to separate pre-B task | Including it expands scope and changes draw positions |
 | 6 | Flora variant selection | Explicit optional `variant` with stable hash fallback | Hash-only is less art-directable; explicit-only requires 41 config edits |
 | 7 | Flora size mapping | Use patch `radius`; keep 41 patches | Changing patch count/positions is out of scope |
@@ -1215,3 +1244,10 @@ Each step is a separate commit. Do not mix the flora spike with the atlas migrat
 | 2026-10-20 | Initial pre-B atlas DPR and flora L-system plan. Docs only; no game code changed. | Visual foundation pass |
 | 2026-10-20 | Added the live Playwright visual/UX audit, Workstream 3 (stage scaling, safe area, settings/modal accessibility, opening-frame readability), external-audit reconciliation, measured QA gates and deferred Milestone F1–F3 register. Docs only; no game code changed. | Visual foundation pass |
 | 2026-10-20 | Refined the audit against the screenshots and DOM: confirmed bottom-left ability placement per UX §4.2, measured 2 px frame overflow at 1280 and 236 px clipping at 1024, verified the 0.8 stage simulation restores the 720 px dossier, and separated prop value loss from flower occlusion. Docs only. | Visual foundation pass |
+| 2026-10-21 | Rebased the plan's baseline, file map and work-package paths onto `personas/` and `items/`; recorded PB-6/PB-7 as committed, corrected the stale checkpoint references and confirmed fixed 2×. Docs only. | Visual foundation pass |
+| 2026-10-21 | PB-1 implemented in `buffer.ts` with `CanvasSurface`/`SpriteBuffer`, fixed 2× backing, DPR/draw math and 11 contract tests. Typecheck, lint, 22/22 tests, build and bundle budget pass; no recipes migrated. | Visual foundation pass |
+| 2026-10-21 | PB-2 migrated all 21 atlas buffers and consumers to the 2x SpriteBuffer contract; logical dimensions unchanged. | Visual foundation pass |
+| 2026-10-21 | PB-3 implemented the static-ground/dynamic-prop split, WorldPropsRenderer, WorldEntityRenderer and five prop-culling tests; layer order and DPR 2 props verified. | Visual foundation pass |
+| 2026-10-21 | PB-4 split lighting into `LightingCache` and `LightingPass`, reset the light buffer per frame and verified a pixel-identical frame-1 composite. | Visual foundation pass |
+| 2026-10-21 | PB-5 split the staging enemies into five family modules and a stable barrel; production bundle unchanged. | Visual foundation pass |
+| 2026-10-21 | PB-8 reframed the glasshouse/cold frames, added the midground edge/value pass and lantern-revealed service detail, and implemented Mira's 1.8 px closed cyan rim. Measured 5.77:1 minimum road / 6.85:1 soil, reviewed grayscale, 50% and DPR 2; opening-frame gate passes, awaiting review. | Visual foundation pass |
